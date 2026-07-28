@@ -1,0 +1,205 @@
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import RadialBracket from '../src/components/RadialBracket.jsx'
+import { FollowProvider } from '../src/context/follow.jsx'
+import { DetailContext } from '../src/context/detail.js'
+import { MATCHES as PLAYED } from '../src/data/matches.js'
+import { unscored } from './helpers/tournament.js'
+// This edition is finished, so the committed schedule ships with every result
+// in it. These tests were written against a schedule that had none, so they
+// work from a blank board; `PLAYED` is there when the real results are wanted.
+const MATCHES = unscored(PLAYED)
+import { TEAMS } from '../src/data/teams.js'
+import { computeClinch } from '../src/utils/clinch.js'
+import { resolveBracket } from '../src/utils/bracketResolve.js'
+
+const GROUPS = Object.keys(TEAMS)
+const ALL = new Set(Object.values(TEAMS).flat().map((t) => t.name))
+
+// A clean 9/6/3/0 group stage so the Round of 16 resolves unambiguously.
+function buildComplete() {
+  const score = {}
+  GROUPS.forEach((g, i) => {
+    const idx = Object.fromEntries(TEAMS[g].map((t, k) => [t.name, k]))
+    for (const m of MATCHES) {
+      if (m.stage !== 'Group' || m.group !== g) continue
+      const a = idx[m.t1]
+      const b = idx[m.t2]
+      const margin = Math.min(a, b) === 2 && Math.max(a, b) === 3 ? i + 1 : 1
+      score[m.num] = a < b ? [margin, 0] : [0, margin]
+    }
+  })
+  return MATCHES.map((m) => (score[m.num] ? { ...m, score: score[m.num] } : m))
+}
+
+// Play the whole bracket through (home advances; one shootout) to a champion.
+function playedBracket() {
+  let cur = buildComplete()
+  const clinch = computeClinch(cur)
+  cur = resolveBracket(cur, clinch)
+  for (let pass = 0; pass < 10; pass++) {
+    let changed = false
+    cur = cur.map((m) => {
+      if (m.stage === 'Group' || Array.isArray(m.score)) return m
+      if (!ALL.has(m.t1) || !ALL.has(m.t2)) return m
+      changed = true
+      return m.num === 79 ? { ...m, score: [1, 1], pens: [4, 2] } : { ...m, score: [1, 0] }
+    })
+    cur = resolveBracket(cur, clinch)
+    if (!changed) break
+  }
+  return cur
+}
+
+const renderRB = (matches) => {
+  const openDetail = vi.fn()
+  const utils = render(
+    <FollowProvider>
+      <DetailContext.Provider value={openDetail}>
+        <RadialBracket matches={matches} />
+      </DetailContext.Provider>
+    </FollowProvider>,
+  )
+  return { ...utils, openDetail }
+}
+
+describe('RadialBracket', () => {
+  it('renders the ring structure and trophy before any results', () => {
+    const { container } = renderRB(MATCHES)
+    expect(container.querySelector('.rb-svg')).toBeTruthy()
+    expect(screen.getByText('🏆')).toBeInTheDocument()
+    // The Euro has no third-place play-off, so nothing sits below the trophy.
+    expect(screen.queryByText(/Third place/)).toBeNull()
+    // Connectors for the whole tree are drawn.
+    expect(container.querySelectorAll('.rb-line').length).toBeGreaterThan(20)
+    // A clickable matchup group + match-number label for all 15 knockout matches.
+    expect(container.querySelectorAll('.rb-matchup.rb-click').length).toBe(15)
+    expect(container.querySelectorAll('.rb-mnum').length).toBe(15)
+    expect(screen.getByText('M40')).toBeInTheDocument()
+    // Pre-knockout there's no champion crown yet.
+    expect(screen.queryByText('👑')).toBeNull()
+  })
+
+  it('fills flags with country-name tooltips and crowns the champion once played', () => {
+    const { container } = renderRB(playedBracket())
+    // Each flag node carries an SVG <title> = the country name (hover tooltip).
+    const titles = [...container.querySelectorAll('title')].map((t) => t.textContent)
+    expect(titles.some((t) => /^Belgium/.test(t))).toBe(true)
+    expect(titles.some((t) => /^Denmark/.test(t))).toBe(true)
+    // The champion is crowned, and a "Champion: …" title is present.
+    expect(screen.getByText('👑')).toBeInTheDocument()
+    expect(titles.some((t) => /^Champion: /.test(t))).toBe(true)
+    // The champion's name lights up under the (glowing) trophy.
+    expect(screen.getByText(/— Champions$/)).toBeInTheDocument()
+    expect(container.querySelector('.rb-trophy-won')).toBeTruthy()
+  })
+
+  it('pins the final (M51) above the trophy', () => {
+    const { container } = renderRB(playedBracket())
+    const m51 = [...container.querySelectorAll('.rb-mnum')].find((t) => t.textContent === 'M51')
+    expect(m51).toBeTruthy()
+    // viewBox centre is y=500; the final's number must sit above it.
+    expect(parseFloat(m51.getAttribute('y'))).toBeLessThan(500)
+  })
+
+  it('opens the match detail when a flag is clicked', () => {
+    const { container, openDetail } = renderRB(playedBracket())
+    const node = container.querySelector('.rb-node.rb-click')
+    expect(node).toBeTruthy()
+    fireEvent.click(node)
+    expect(openDetail).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows scores on played matches, hides them in spoiler-free mode, and blinks a live dot', () => {
+    // Played bracket → scores present; mark one Round-of-16 tie live.
+    const played = playedBracket().map((m) => (m.num === 37 ? { ...m, live: { clock: "70'" } } : m))
+    const { container, rerender } = renderRB(played)
+    expect(container.querySelectorAll('.rb-score').length).toBeGreaterThan(0)
+    expect(container.querySelector('.rb-live-dot')).toBeTruthy() // M37 is in play
+    // Spoiler-free: scores hidden (the live dot, a status not a score, remains).
+    rerender(
+      <FollowProvider>
+        <DetailContext.Provider value={() => {}}>
+          <RadialBracket matches={played} hideScores />
+        </DetailContext.Provider>
+      </FollowProvider>,
+    )
+    expect(container.querySelectorAll('.rb-score').length).toBe(0)
+    expect(container.querySelector('.rb-live-dot')).toBeTruthy()
+  })
+
+  it('opens the match detail when a matchup group (its bracket join / number) is clicked', () => {
+    const { container, openDetail } = renderRB(playedBracket())
+    const group = container.querySelector('.rb-matchup.rb-click')
+    expect(group).toBeTruthy()
+    fireEvent.click(group)
+    expect(openDetail).toHaveBeenCalledTimes(1)
+  })
+
+  it('labels the rounds down the top seam and shows kickoff times on unplayed ties', () => {
+    const { container } = renderRB(MATCHES)
+    for (const label of ['ROUND OF 16', 'QUARTER-FINALS', 'SEMI-FINALS']) {
+      expect(screen.getByText(label)).toBeInTheDocument()
+    }
+    // Every knockout tie is unplayed → each of the 15 shows its kickoff time.
+    expect(container.querySelectorAll('.rb-time').length).toBe(15)
+    // A played bracket swaps times for scores.
+    const done = renderRB(playedBracket())
+    expect(done.container.querySelectorAll('.rb-time').length).toBe(0)
+  })
+
+  it('spotlights matches playing today with a halo', () => {
+    vi.useFakeTimers()
+    try {
+      // "Today" = the semi-finals' first day → M49 gets a halo, M50 (next day) doesn't.
+      vi.setSystemTime(new Date('2024-07-09T10:00:00+02:00'))
+      const { container } = renderRB(MATCHES)
+      expect(container.querySelectorAll('.rb-halo').length).toBe(1)
+      // A quiet day → no halos anywhere.
+      const quiet = renderRB(MATCHES.map((m) => ({ ...m })))
+      vi.setSystemTime(new Date('2024-08-01T10:00:00+02:00'))
+      quiet.rerender(
+        <FollowProvider>
+          <DetailContext.Provider value={() => {}}>
+            <RadialBracket matches={MATCHES.map((m) => ({ ...m }))} />
+          </DetailContext.Provider>
+        </FollowProvider>,
+      )
+      expect(quiet.container.querySelectorAll('.rb-halo').length).toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('dims eliminated teams while the tournament is on, none once it is over', () => {
+    // Play everything up to (not including) the semis: only 4 semifinalists
+    // (plus unresolved slots) stay vivid, plenty of flags fade.
+    let cur = buildComplete()
+    const clinch = computeClinch(cur)
+    cur = resolveBracket(cur, clinch)
+    for (let pass = 0; pass < 10; pass++) {
+      cur = cur.map((m) => {
+        if (m.stage === 'Group' || Array.isArray(m.score)) return m
+        if ([49, 50, 51].includes(m.num)) return m
+        if (!ALL.has(m.t1) || !ALL.has(m.t2)) return m
+        return { ...m, score: [1, 0] }
+      })
+      cur = resolveBracket(cur, clinch)
+    }
+    const { container } = renderRB(cur)
+    expect(container.querySelectorAll('.rb-node.out').length).toBeGreaterThan(10)
+    // Fully played → the race is over; the finished bracket stays vivid.
+    const done = renderRB(playedBracket())
+    expect(done.container.querySelectorAll('.rb-node.out').length).toBe(0)
+  })
+
+  it('lights the champion’s golden trail once the Final is decided', () => {
+    const { container } = renderRB(playedBracket())
+    // The champion's route: R16 → QF → SF → Final = 4 matchups.
+    expect(container.querySelectorAll('.rb-matchup.champ-trail').length).toBe(4)
+    expect(container.querySelectorAll('.rb-node.on-trail').length).toBeGreaterThan(0)
+    // No trail while the Final is unplayed.
+    const pending = renderRB(MATCHES)
+    expect(pending.container.querySelectorAll('.champ-trail').length).toBe(0)
+  })
+})

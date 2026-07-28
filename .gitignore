@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-ssr
+coverage
+public/coverage.json
+*.local
+.DS_Store
+.netlify
+.env
+.env.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local Claude Code settings (per-machine, not shared)
+.claude/settings.local.json
