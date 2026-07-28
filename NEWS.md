@@ -109,6 +109,20 @@ completed edition so the next European Championship can slot straight in.
   defers to the recorded score, which would leave the whole live subsystem — and
   the group-stage tools — unreachable from `<App/>`.
 
+### Published
+
+- **Repo created** at [`ismayc/football-euros-viewer`](https://github.com/ismayc/football-euros-viewer)
+  (public) and pushed; CI's test & build job green on the first run.
+- **Live on GitHub Pages**: https://ismayc.github.io/football-euros-viewer/
+  (Pages enabled with the Actions build type).
+- **Registered in the family hub**, commented out in `src/data/viewers.js`
+  alongside the World Cup — both cover a completed tournament whose next edition
+  is years off, so an enabled tile would read "Offseason" until then. Hub icon
+  added at `public/icons/euros.png`.
+- **Netlify deploy is still red**, and will stay red until `NETLIFY_AUTH_TOKEN`
+  and `NETLIFY_SITE_ID` are set as repo secrets (the site also has to be created
+  in the Netlify account first). Nothing else in CI depends on it.
+
 ### Verified
 
 - The engines reconstruct the real 2024 tournament from the committed group
