@@ -119,9 +119,17 @@ completed edition so the next European Championship can slot straight in.
   alongside the World Cup — both cover a completed tournament whose next edition
   is years off, so an enabled tile would read "Offseason" until then. Hub icon
   added at `public/icons/euros.png`.
-- **Netlify deploy is still red**, and will stay red until `NETLIFY_AUTH_TOKEN`
-  and `NETLIFY_SITE_ID` are set as repo secrets (the site also has to be created
-  in the Netlify account first). Nothing else in CI depends on it.
+- **Netlify builds this repo straight from Git** (site linked in the Netlify UI),
+  so CI's `netlify-cli` deploy job is gone — it was redundant with the Git build
+  and permanently red without deploy secrets. The badge JSON it used to produce
+  now comes from Netlify's own build: `netlify.toml`'s command is
+  `npm run coverage:badge && npm run build`.
+- **Fixed the calendar function on the Git-build path.** `netlify/functions/
+  calendar.js` used CommonJS (`exports.handler`), which Netlify's runtime rejects
+  under this package's `"type": "module"` — `/calendar.ics` returned a 502
+  `module is not defined in ES module scope`. Now a real ES module. (The sibling
+  world-cup-viewer has the same CommonJS file but deploys through `netlify-cli`,
+  which bundles it, so it never hit this.)
 
 ### Verified
 

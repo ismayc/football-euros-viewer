@@ -16,7 +16,7 @@ const norm = (n) => (n ? ALIASES[n] || n : n)
 // OpenFootball's knockout slot codes (1A, 2B, 3A/B/C/D/F, W39) are cryptic in a
 // calendar. Map them to the same friendly wording the app's bracket uses; a
 // resolved real team name just passes through (normalised).
-function prettySlot(label) {
+export function prettySlot(label) {
   if (!label) return label
   let m = /^1([A-F])$/.exec(label)
   if (m) return `Winner Group ${m[1]}`
@@ -29,7 +29,6 @@ function prettySlot(label) {
   if (m) return `Loser Match ${m[1]}`
   return norm(label)
 }
-exports.prettySlot = prettySlot
 
 // The feed pluralises the knockout rounds ('Quarter-finals'); the app labels them
 // in the singular, so the calendar matches what the bracket shows.
@@ -97,7 +96,7 @@ function vevent(m) {
   ].join('\r\n')
 }
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   try {
     const res = await fetch(FEED)
     if (!res.ok) return { statusCode: 502, body: `Upstream ${res.status}` }
