@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import {
   openFootballFinalScore,
+  applyResults,
   fetchResults,
   isRealTeam,
   matchKey,
@@ -120,5 +121,16 @@ describe('isRealTeam', () => {
   it('false for placeholders, true for qualified sides', () => {
     expect(isRealTeam('2A')).toBe(false)
     expect(isRealTeam('Germany')).toBe(true)
+  })
+})
+
+describe('a record with no result in it', () => {
+  it('leaves a group match alone when the record carries no score', () => {
+    // A fixture line with no result yet: the record exists (so the teams are
+    // known) but writing it back would blank the board rather than fill it.
+    const base = { num: 1, stage: 'Group', group: 'A', t1: 'Alpha', t2: 'Beta', ko: '2024-06-14T19:00:00Z' }
+    const map = new Map([[matchKey(base), { home: 'Alpha', away: 'Beta' }]])
+    const [out] = applyResults([base], map)
+    expect(out).toBe(base)
   })
 })

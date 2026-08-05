@@ -28,6 +28,15 @@ describe('historyDates', () => {
     expect(dates).toEqual(['20240614', '20240615', '20240616'])
   })
 
+  it('skips a fixture that has no kickoff instant yet', () => {
+    // Knockout placeholders can reach the board before a date is published; they
+    // have no day to backfill from and must not become an "Invalid Date" query.
+    const withTbd = [...MATCHES, { num: 999, stage: 'Final', t1: 'TBD', t2: 'TBD' }]
+    expect(historyDates(withTbd, new Date('2023-07-01T00:00:00Z'))).toEqual(
+      historyDates(MATCHES, new Date('2023-07-01T00:00:00Z')),
+    )
+  })
+
   it('is empty before the tournament starts (nothing has kicked off)', () => {
     expect(historyDates(MATCHES, new Date('2024-06-01T00:00:00Z'))).toEqual([])
   })
