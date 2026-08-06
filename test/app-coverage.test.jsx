@@ -513,9 +513,12 @@ describe('App coverage', () => {
       await vi.advanceTimersByTimeAsync(31000)
       await vi.waitFor(() => expect(fired.length).toBeGreaterThan(0))
       expect(fired[0].title).toMatch(/GOAL/)
-      // …and the same goal raises an on-page toast; its ✕ dismisses it.
-      const toast = screen.getByRole('region', { name: /Goal alerts/ })
-      expect(toast.textContent).toMatch(/Jimenez/)
+      // …and the same goal raises an on-page toast; its ✕ dismisses it. The OS
+      // notification and the toast are raised by the same effect, but CI can
+      // observe them a render apart — so wait for the region rather than
+      // reading it the instant the notification lands.
+      const region = () => screen.getByRole('region', { name: /Goal alerts/ })
+      await vi.waitFor(() => expect(region().textContent).toMatch(/Jimenez/))
       fireEvent.click(screen.getByLabelText('Dismiss'))
       expect(screen.queryByRole('region', { name: /Goal alerts/ })).toBeNull()
     } finally {
