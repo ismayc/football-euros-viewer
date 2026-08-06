@@ -102,3 +102,61 @@ describe('Standings — projection off, and a clinch the table cannot place', ()
     expect(container.textContent).not.toMatch(/Nowhere United/)
   })
 })
+
+describe('Standings — what "as it stands" shows when the bracket cannot answer', () => {
+  // A full Group A round-robin, every game 0-0, so the table is level all the
+  // way down to the soft criteria and no group but A has anything on it.
+  const A = ['Germany', 'Hungary', 'Scotland', 'Switzerland']
+  const PAIRS = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]
+  const groupA = () =>
+    PAIRS.map(([i, j], k) => ({
+      num: 100 + k,
+      stage: 'Group',
+      group: 'A',
+      t1: A[i],
+      t2: A[j],
+      ko: `2024-06-2${k}T15:00:00Z`,
+      score: [0, 0],
+    }))
+
+  it('shows TBD when the tie a qualifier feeds into has no group slot opposite', () => {
+    const board = [
+      ...groupA(),
+      { num: 900, stage: 'R16', t1: 'Winner Group A', t2: 'Winner Match 5', ko: '2024-07-05T15:00:00Z' },
+    ]
+    const { container } = render(
+      <FollowProvider>
+        <Standings matches={board} hideScores={false} clinch={computeClinch(board)} />
+      </FollowProvider>,
+    )
+    const row = container.querySelector('.ais-row')
+    expect(row.querySelector('.ais-opp').textContent).toBe('TBD')
+  })
+
+  it('offers a through team no matchup at all when neither source can name one', () => {
+    // A board with no knockout fixtures on it (they are published later) and a
+    // team the clinch prop calls top-two while the table still has it 4th — the
+    // rank ladder has no destination to offer, and neither has the locked
+    // opponent, so the modal opens on the clinch verdict alone.
+    // Germany carries no European Qualifiers rank (they were hosts), so on a
+    // table that is level throughout they sort last.
+    const board = groupA()
+    const clinch = { Germany: 'top2' }
+    const { container } = render(
+      <FollowProvider>
+        <Standings matches={board} hideScores={false} clinch={clinch} />
+      </FollowProvider>,
+    )
+    // Teeth: the whole point is that Germany is OUTSIDE the top three, so the
+    // rank ladder falls off its end. If the table ever ranked them 1-3 this test
+    // would pass for the wrong reason.
+    const gerRow = [...container.querySelectorAll('tr')].find((tr) =>
+      tr.querySelector('.row-team')?.textContent.trim() === 'Germany',
+    )
+    expect(gerRow.querySelector('.rank').textContent).toBe('4')
+
+    clickTeam(container, 'Germany')
+    expect(document.querySelector('.gg-ko-tbd').textContent).toBe('To be determined')
+    expect(document.querySelector('.gg-ko-num')).toBeNull()
+  })
+})

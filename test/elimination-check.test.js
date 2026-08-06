@@ -249,3 +249,149 @@ describe('eliminationStatus — basic verdicts', () => {
     for (const t of TEAMS['A']) expect(isAlive(matches, t.name)).toBe(true)
   })
 })
+
+describe('third-place entry slots — teams the bracket has no room for', () => {
+  // Groups A–D field a strong third (4 pts), E and F a battered one (3 pts, −9),
+  // so the four best thirds are exactly A–D and the group stage is complete.
+  const completeStage = () => {
+    const scores = {}
+    for (const g of ['A', 'B', 'C', 'D']) Object.assign(scores, groupScores(g, STRONG))
+    for (const g of ['E', 'F']) Object.assign(scores, groupScores(g, WEAK))
+    return withScores(scores)
+  }
+
+  it('names no slots at all for a team that is in no group', () => {
+    // A name the committed table has never carried — an upstream re-spelling,
+    // say. Neither form may attribute somebody else's slots to it.
+    const matches = completeStage()
+    expect(thirdPlaceEntrySlots(matches, 'Nowhere United')).toEqual([])
+    expect(aliveEntrySlots(matches, ['Nowhere United'])).toEqual({})
+  })
+
+  it('omits a third that no reachable combination carries into the bracket', () => {
+    // Group E's third IS its group's third-placed team, but with the stage
+    // complete only one four-group combination remains reachable and E is not in
+    // it — so there is no slot to name, and the batch form leaves it out
+    // entirely rather than listing it with an empty array.
+    const matches = completeStage()
+    const eThird = TEAMS['E'][2].name
+    const slots = aliveEntrySlots(matches, TEAMS['E'].map((t) => t.name))
+    expect(slots[eThird]).toBeUndefined()
+    // Teeth: a third that DID make the cut is listed, so the omission is about
+    // this team rather than the batch form returning nothing on this board.
+    const aThird = TEAMS['A'][2].name
+    expect(aliveEntrySlots(matches, [aThird])[aThird].length).toBeGreaterThan(0)
+  })
+})
+
+describe('the exact check across groups it cannot enumerate', () => {
+  // Groups A–E played out plainly; Group F's bottom two are both beaten twice by
+  // two goals and their meeting is still to come. Whoever wins it finishes third
+  // on 3 points; a draw leaves the third on 1 point with a −4 goal difference.
+  // So F's third-placed team has SEVERAL reachable profiles, which is what makes
+  // the "strongest reachable profile" search do any work.
+  const SWING = (hi, lo) => (lo >= 2 && hi <= 1 ? { margin: 2 } : { margin: 1 })
+  const swingF = () => {
+    const idx = Object.fromEntries(TEAMS['F'].map((t, k) => [t.name, k]))
+    const scores = groupScores('F', SWING)
+    const decider = MATCHES.find(
+      (m) =>
+        m.stage === 'Group' &&
+        m.group === 'F' &&
+        Math.min(idx[m.t1], idx[m.t2]) === 2 &&
+        Math.max(idx[m.t1], idx[m.t2]) === 3,
+    )
+    delete scores[decider.num]
+    return scores
+  }
+
+  const board = (opts = {}) => {
+    const scores = { ...swingF() }
+    for (const g of ['A', 'B', 'C', 'D', 'E']) Object.assign(scores, groupScores(g, PLAIN))
+    for (const num of opts.unplay || []) delete scores[num]
+    return withScores(scores)
+  }
+
+  it('takes the strongest third-place profile a team can still reach', () => {
+    // F's third can be on 3 points or on 1 — the check has to reason from the 3,
+    // its easiest path, or it would eliminate the team on its worst case.
+    const matches = board()
+    const fThird = TEAMS['F'][2].name
+    expect(matches.filter((m) => m.stage === 'Group' && !m.score)).toHaveLength(1)
+    expect(isAlive(matches, fThird)).toBe(true)
+  })
+
+  it('refuses to count a rival group that is too open to enumerate', () => {
+    // Group E loses three results, putting its remaining scoreline space over the
+    // budget. It can no longer be shown to force anyone below it, so it simply
+    // does not count towards the four-thirds cut — never a false elimination.
+    const eNums = MATCHES.filter((m) => m.stage === 'Group' && m.group === 'E')
+      .slice(0, 3)
+      .map((m) => m.num)
+    const open = board({ unplay: eNums })
+    const status = eliminationStatus(open)
+    // Everyone in the unenumerable group is held alive...
+    for (const t of TEAMS['E']) expect(status[t.name]).toBe('alive')
+    // ...and a team elsewhere that depends on the thirds race still gets a
+    // verdict, computed with group E left out of the count.
+    expect(status[TEAMS['A'][2].name]).toBe('alive')
+  })
+
+  it('declines to state requirements while the team’s own group cannot be enumerated', () => {
+    const cNums = MATCHES.filter((m) => m.stage === 'Group' && m.group === 'C')
+      .slice(0, 3)
+      .map((m) => m.num)
+    const open = board({ unplay: cNums })
+    expect(advancementRequirements(open, TEAMS['C'][2].name)).toBeNull()
+    // Teeth: with Group C intact the same team does get a requirements picture.
+    expect(advancementRequirements(board(), TEAMS['C'][2].name)).toBeTruthy()
+  })
+})
+
+describe('advancementRequirements — how the threshold reads', () => {
+  // Group F's bottom two are beaten twice by two goals with their meeting to
+  // come, so F's third is the group in the balance: a win there puts it above
+  // any modest third, a draw leaves it on a single point with a −4 difference.
+  const SWING = (hi, lo) => (lo >= 2 && hi <= 1 ? { margin: 2 } : { margin: 1 })
+  const swingF = () => {
+    const idx = Object.fromEntries(TEAMS['F'].map((t, k) => [t.name, k]))
+    const scores = groupScores('F', SWING)
+    const decider = MATCHES.find(
+      (m) =>
+        m.stage === 'Group' &&
+        m.group === 'F' &&
+        Math.min(idx[m.t1], idx[m.t2]) === 2 &&
+        Math.max(idx[m.t1], idx[m.t2]) === 3,
+    )
+    delete scores[decider.num]
+    return scores
+  }
+  const boardWith = (cTemplate) => {
+    const scores = { ...groupScores('C', cTemplate), ...swingF() }
+    for (const g of ['A', 'B', 'D', 'E']) Object.assign(scores, groupScores(g, PLAIN))
+    return withScores(scores)
+  }
+
+  it('signs a positive goal difference', () => {
+    // Group C's third thrashes the bottom side 3–0 and loses its other two 0–1:
+    // three points and a PLUS-one difference, which the threshold must spell
+    // with its sign or "worse than 1" reads as a bigger number than it is.
+    const POSITIVE = (hi, lo) => (hi === 2 && lo === 3 ? { margin: 3 } : { margin: 1 })
+    const req = advancementRequirements(boardWith(POSITIVE), TEAMS['C'][2].name)
+    expect(req.profile).toMatchObject({ Pts: 3, GD: 1 })
+    expect(req.variable.map((v) => v.group)).toEqual(['F'])
+    expect(req.variable[0].condition).toMatch(/goal difference worse than \+1/)
+  })
+
+  it('counts a single point in the singular', () => {
+    // Group C's third draws with the bottom side and loses its other two 0–1,
+    // while the bottom side is beaten 0–3 twice: one point, and it must read
+    // "fewer than 1 point", not "1 points".
+    const ONE_POINT = (hi, lo) =>
+      hi === 2 && lo === 3 ? { draw: true } : lo === 3 ? { margin: 3 } : { margin: 1 }
+    const req = advancementRequirements(boardWith(ONE_POINT), TEAMS['C'][2].name)
+    expect(req.profile).toMatchObject({ Pts: 1, GD: -2 })
+    expect(req.variable.map((v) => v.group)).toEqual(['F'])
+    expect(req.variable[0].condition).toMatch(/fewer than 1 point,/)
+  })
+})

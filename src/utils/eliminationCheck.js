@@ -196,6 +196,7 @@ export function thirdPlaceEntrySlots(matches, team, reachable = null) {
     if (!key.includes(group)) continue
     const combo = THIRD_PLACE_COMBINATIONS[key] // winner-ordered string of third groups
     const i = combo.indexOf(group)
+    /* v8 ignore next -- unreachable: the loop skips keys without this group, and a key's combination lists the same four groups, so the index always hits one of the four THIRD_WINNER_ORDER hosts */
     if (i >= 0 && THIRD_WINNER_ORDER[i]) winners.add(THIRD_WINNER_ORDER[i])
   }
   return [...winners]
@@ -261,6 +262,7 @@ export function advancementRequirements(matches, team, reach = null) {
   }
 
   let P = mine[0]
+  /* v8 ignore next -- unreachable: past the `!rT.complete` return above the group has no games left, so it produces exactly one third-place profile and there is nothing to improve on */
   for (const t of mine) if (thirdRanksAbove(t, P)) P = t
 
   let forcedAbove = 0

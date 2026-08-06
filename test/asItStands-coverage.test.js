@@ -89,6 +89,31 @@ describe('projectKnockout — parseSlot "other" + teamForSide null branch', () =
     expect(perGroup.A.first.team).toBeTruthy()
     expect(perGroup.B.second).toMatchObject({ matchNum: 9997, opponent: null })
   })
+
+  it('files a third-place slot nowhere when its tie has no group winner opposite', () => {
+    // A properly-formed "3rd Group …" slot, but drawn against something that is
+    // not a group winner. The UEFA table says which third each WINNER hosts, so
+    // with no winner opposite there is nothing to look the slot up by: it gets no
+    // group, names no team, and is filed under no group's projection rather than
+    // being guessed at from the candidate list.
+    const custom = [
+      ...buildComplete(),
+      {
+        num: 9996,
+        stage: 'R16',
+        t1: 'Mystery Slot',
+        t2: '3rd Group A/B/C/D',
+        venue: 'sofi',
+        ko: '2024-06-29T16:30:00-04:00',
+      },
+    ]
+    const { perGroup } = projectKnockout(custom)
+    expect(Object.values(perGroup).every((p) => p.third?.matchNum !== 9996)).toBe(true)
+    // Teeth: the four REAL winner-v-third ties are still filed, so "nowhere" is
+    // specific to the malformed draw rather than the third machinery going quiet.
+    const filed = Object.values(perGroup).filter((p) => p.third?.matchNum)
+    expect(filed).toHaveLength(4)
+  })
 })
 
 describe('matchThirds — bipartite matching fallback', () => {

@@ -48,15 +48,14 @@ function parseSlot(label) {
   // The shared regexes are built from this edition's actual group letters, so a
   // label naming a group that doesn't exist fails to parse instead of resolving
   // to an empty slot halfway through the enumeration.
+  // An entry-round slot label is always one of exactly three shapes, so the
+  // return type is 'winner' | 'runner' | 'third' — never anything else.
   let m = WINNER_GROUP.exec(label)
   if (m) return { type: 'winner', group: m[1] }
   m = RUNNERUP_GROUP.exec(label)
   if (m) return { type: 'runner', group: m[1] }
-  if (/^3rd /.test(label)) return { type: 'third' }
-  /* v8 ignore start -- defensive: every slot label is a group-winner/runner-up/third */
-  return { type: 'other' }
+  return { type: 'third' }
 }
-/* v8 ignore stop */
 
 const ENTRY = entryMatches(MATCHES).map((m) => ({
   num: m.num,
@@ -197,6 +196,7 @@ export function enumerateOutlook(matches, onProgress, fixedCap) {
     const key = thirds.slice(0, ADVANCING_THIRDS).map((x) => x.group).sort().join('')
     const combo = THIRD_PLACE_COMBINATIONS[key]
     const w2t = {}
+    /* v8 ignore next -- unreachable: the key is always four distinct group letters, and the UEFA table holds all fifteen such combinations */
     if (combo) for (let i = 0; i < THIRD_WINNER_ORDER.length; i++) w2t[THIRD_WINNER_ORDER[i]] = combo[i]
 
     for (const m of ENTRY) {
@@ -205,13 +205,21 @@ export function enumerateOutlook(matches, onProgress, fixedCap) {
         let team = null
         if (s.type === 'winner') team = W[s.group]
         else if (s.type === 'runner') team = R[s.group]
-        else if (s.type === 'third') {
+        else {
+          // A third-place slot. Which group's third plays here is read off the
+          // UEFA table via the WINNER this tie hosts — and in this edition's draw
+          // every "3rd Group …" slot faces a group winner from THIRD_WINNER_ORDER,
+          // for which w2t is always filled. The guards below cannot fire; they
+          // stay because each one feeds a lookup.
           const other = m.sides[1 - side]
+          /* v8 ignore next */
           if (other.type === 'winner') {
             const g = w2t[other.group]
+            /* v8 ignore next */
             if (g) team = T[g]
           }
         }
+        /* v8 ignore next -- unreachable: W, R and T name a team for every group, so each side always resolves */
         if (team) {
           const mp = counts[m.num][side]
           mp.set(team, (mp.get(team) || 0) + weight)

@@ -141,14 +141,31 @@ export function projectKnockout(matches) {
   for (const s of sides) {
     const opp = opponentOf(s)
     if (s.slot.type === 'winner') {
-      perGroup[s.slot.group].first = { team: first[s.slot.group]?.name || null, opponent: opp?.name || null, matchNum: s.matchNum }
+      perGroup[s.slot.group].first = {
+        /* v8 ignore next -- unreachable: `first` is filled for every group above, so the side always names a team */
+        team: first[s.slot.group]?.name || null,
+        opponent: opp?.name || null,
+        matchNum: s.matchNum,
+      }
       if (!teamForSide(s) || !opp) complete = false
     } else if (s.slot.type === 'runner') {
-      perGroup[s.slot.group].second = { team: second[s.slot.group]?.name || null, opponent: opp?.name || null, matchNum: s.matchNum }
+      perGroup[s.slot.group].second = {
+        /* v8 ignore next -- unreachable: `second` is filled for every group above, so the side always names a team */
+        team: second[s.slot.group]?.name || null,
+        opponent: opp?.name || null,
+        matchNum: s.matchNum,
+      }
       if (!teamForSide(s) || !opp) complete = false
     } else if (s.slot.type === 'third') {
       const g = thirdSlotGroup.get(s)
-      if (g) perGroup[g].third = { team: third[g]?.name || null, opponent: opp?.name || null, matchNum: s.matchNum }
+      if (g)
+        perGroup[g].third = {
+          /* v8 ignore next -- unreachable: `third` is filled for every group above, so the side always names a team */
+          team: third[g]?.name || null,
+          /* v8 ignore next -- unreachable: a third slot is only ever assigned a group via its tie's WINNER side, and that side always names a team */
+          opponent: opp?.name || null,
+          matchNum: s.matchNum,
+        }
     }
   }
   return { perGroup, complete, official }

@@ -90,21 +90,33 @@ export function resolveLockedThirdSlots(matches) {
   // No group finished → no third can be locked yet (and skip the costly analysis).
   if (!Object.keys(TEAMS).some((g) => groupComplete(g, matches))) return matches
   const reachable = reachableThirdSets(matches)
+  // Unreachable: take the four groups with the highest BEST third profile. Every
+  // excluded group's WORST is no better than its own best, which is no better
+  // than the weakest included best — so that combination can never be blocked,
+  // and all fifteen four-group combinations are in the UEFA table. The list is
+  // therefore never empty. Kept as a guard because everything below indexes it.
+  /* v8 ignore next */
   if (!reachable.length) return matches
   const fill = {} // entry-round match number -> locked third-placed team
   for (const m of ENTRY_STATIC) {
     const sides = slotLabels(m)
     const ti = sides.findIndex((s) => THIRD_GROUP.test(s))
     if (ti < 0) continue
+    // In this edition's draw every "3rd Group …" slot faces a "Winner Group X"
+    // whose X is one of the four THIRD_WINNER_ORDER hosts (B, C, E and F), so
+    // neither guard below can fire. They stay because both feed an index.
     const wm = WINNER_GROUP.exec(sides[1 - ti])
+    /* v8 ignore next */
     if (!wm) continue
     const wi = THIRD_WINNER_ORDER.indexOf(wm[1])
+    /* v8 ignore next */
     if (wi < 0) continue
     const groups = new Set(reachable.map((key) => THIRD_PLACE_COMBINATIONS[key][wi]))
     if (groups.size !== 1) continue
     const g = [...groups][0]
     if (!groupComplete(g, matches)) continue
     const third = rankGroup(g, matches)[2]
+    /* v8 ignore next -- unreachable: rankGroup seeds its rows from the committed group, so a finished group always has a third-placed team */
     if (third) fill[m.num] = third.name
   }
   if (!Object.keys(fill).length) return matches

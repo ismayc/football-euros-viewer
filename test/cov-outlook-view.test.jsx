@@ -114,6 +114,34 @@ describe('OutlookView (enumeration result rendering)', () => {
     expect(screen.getByText(/3rd in Group L/)).toBeInTheDocument()
   })
 
+  it('states a one-point, positive-GD threshold in the singular and its rival groups in the plural', () => {
+    // The mirror of the checklist above: a survivor sitting on exactly ONE point
+    // with a POSITIVE goal difference, who needs results in TWO other groups.
+    // Every number in that sentence takes the opposite form to the case above —
+    // "1 pt" not "1 pts", "+2" not "2", "rival thirds" not "rival third".
+    render(<OutlookView matches={COMPLETE} />)
+    send({
+      type: 'done',
+      result: allLocked(),
+      survivors: ['Georgia'],
+      requirements: {
+        Georgia: {
+          ownGroupComplete: true,
+          variable: [
+            { group: 'C', contenders: ['Serbia', 'Slovenia'] },
+            { group: 'E', contenders: ['Slovakia', 'Ukraine'] },
+          ],
+          needAtLeast: 2,
+          profile: { Pts: 1, GD: 2 },
+        },
+      },
+    })
+    const head = document.querySelector('.bo-req-head')
+    expect(head.textContent).toMatch(/2 of 2/)
+    expect(head.textContent).toMatch(/rival thirds to finish below them/)
+    expect(head.textContent).toMatch(/under 1 pt, or 1 with GD below \+2/)
+  })
+
   it('announces a fully-set bracket when every slot is locked and nobody is alive beyond the margins', () => {
     render(<OutlookView matches={COMPLETE} />)
     send({ type: 'done', result: allLocked(), survivors: [], requirements: {} })

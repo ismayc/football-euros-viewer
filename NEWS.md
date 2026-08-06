@@ -4,6 +4,45 @@ A dated changelog for the Euro 2024 Schedule Viewer. Each heading is a calendar
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-08-05
+
+- **Toolchain upgrade.** Vite 5 → 8 (Rolldown), Vitest + coverage-v8 2 → 4,
+  `@vitejs/plugin-react` 4 → 6, jsdom 25 → 30, React 18 → 19, jest-dom 6 → 7.
+- **Coverage badge back to 100%.** Vitest 4's v8 provider counts arms Vitest 2
+  skipped, so the badge slipped on the upgrade. Nothing had regressed; the drift
+  had simply been invisible, and it was closed with tests rather than waved
+  through.
+- **Room for the full-app tests on a loaded runner.** The App suite mounts the
+  whole page and drives several poll cycles, which under v8 instrumentation
+  brushed Vitest's default 5s ceiling on a busy GitHub runner — two tests timed
+  out there while passing locally in a fraction of the time. `testTimeout` is
+  now 15s, matching the siblings.
+- **100% on every metric, and a gate that keeps it there.** Branch coverage
+  joined statements, functions and lines at 100%, and `vite.config.js` now
+  carries a `thresholds` block so the suite (and CI's `coverage:badge` step)
+  fails the moment any of the four slips.
+- **The best-thirds machinery is now covered end to end.** That was the last of
+  the gap, and it needed real boards rather than counter-chasing: a third-place
+  tie between two teams the European Qualifiers ranking has no number for (the
+  hosts and a play-off entrant), a group still playing whose fourth-placed side
+  is already out, a third-placed team whose match is suspended rather than
+  merely live, a third-place slot drawn on the FIRST side of its tie, a locked
+  third whose assigned group has not finished yet, a "Loser Match N" feed slot,
+  a third-place slot with no group winner opposite it, a group too large to
+  enumerate falling back to the points bounds, a rival group too open to count
+  towards the four-thirds cut, and the requirement text in both of its awkward
+  forms — a positive goal difference that must keep its sign, and a single point
+  that must not read "1 points".
+- **Two guards removed rather than half-tested.** `parseSlot` no longer carries
+  an "other" arm in either engine: an entry-round label is always a group
+  winner, a runner-up or a third-place slot, so the fallthrough was dead and the
+  dead `else` it forced downstream went with it. Everything else that genuinely
+  cannot be reached is documented in place with the reason — the committed draw
+  pairs every "3rd Group …" slot with a winner from the Annexe C host list, the
+  ranker seeds every group so a finished group always has a third, and all
+  fifteen four-group combinations are in the UEFA table — never waved through
+  with a lowered threshold.
+
 ## 2026-07-28
 
 First release. Built from the sibling

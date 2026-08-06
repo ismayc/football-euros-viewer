@@ -235,7 +235,10 @@ export default function ScenariosView({ matches }) {
                     proj.thirdTeam && (
                       <li className="sc-r16-row sc-r16-out">
                         <span className="sc-r16-pos">3rd</span>
-                        <span className="sc-r16-team">{FLAG_BY_TEAM[proj.thirdTeam] || ''} {proj.thirdTeam}</span>
+                        {/* thirdTeam is the third row of a ranked group table, which
+                            rankGroup seeds from the committed group — so it is always a
+                            member of this edition and always has a flag. No fallback. */}
+                        <span className="sc-r16-team">{FLAG_BY_TEAM[proj.thirdTeam]} {proj.thirdTeam}</span>
                         <span className="sc-r16-note">outside the best four</span>
                       </li>
                     )

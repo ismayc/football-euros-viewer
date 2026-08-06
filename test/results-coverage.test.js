@@ -107,6 +107,18 @@ describe('fetchResults (goal parsing + error branches)', () => {
     expect(map.get(dayKey(DATE, 'Germany', 'Scotland')).score.ft).toEqual([3, 2])
   })
 
+  it('treats a score object with no ft pair at all as no score', async () => {
+    // Half-time only: upstream posts `ht` the moment the whistle goes and fills
+    // `ft` later. Neither shape the parser understands is there, so the record
+    // carries no score rather than a half-time one masquerading as final.
+    const feed = {
+      matches: [{ round: 'Matchday 1', date: DATE, team1: 'Germany', team2: 'Scotland', score: { ht: [0, 0] } }],
+    }
+    global.fetch = vi.fn(async () => ({ ok: true, json: async () => feed }))
+    const map = await fetchResults()
+    expect(map.get(dayKey(DATE, 'Germany', 'Scotland')).score).toBeNull()
+  })
+
   it('treats an incomplete ft (null element) as no score', async () => {
     const feed = {
       matches: [{ round: 'Matchday 1', date: DATE, team1: 'Germany', team2: 'Scotland', score: { ft: [1, null] } }],
