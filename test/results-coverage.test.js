@@ -134,3 +134,41 @@ describe('a record with no result in it', () => {
     expect(out).toBe(base)
   })
 })
+
+describe('applyResults — a knockout tie the feed has only half of', () => {
+  // A drawn tie whose sides the feed still names with placeholders, and one it
+  // has named but not yet played. Each side is written independently, so
+  // neither guards the other, and a record with no score must not blank the
+  // fixture.
+  const tie = {
+    num: 900,
+    stage: 'R16',
+    t1: 'Germany',
+    t2: 'Denmark',
+    ko: '2024-06-29T19:00:00Z',
+  }
+  const withRec = (rec) => applyResults([tie], new Map([[matchKey(tie), rec]]))[0]
+
+  it('leaves a side alone when the feed has no real name for it', () => {
+    const homeUnknown = withRec({ home: 'Winner Group A', away: 'Denmark', g1: [], g2: [] })
+    expect(homeUnknown.t1).toBe('Germany') // untouched by the feed's placeholder
+    expect(homeUnknown.t2).toBe('Denmark')
+
+    const awayUnknown = withRec({ home: 'Spain', away: '2A', g1: [], g2: [] })
+    expect(awayUnknown.t1).toBe('Spain') // the feed's real name won
+    expect(awayUnknown.t2).toBe('Denmark') // the drawn away side, untouched
+  })
+
+  it('fills in the names but no result when the tie has not been played', () => {
+    const out = withRec({ home: 'Germany', away: 'Denmark', g1: [], g2: [] })
+    expect(out.score).toBeUndefined()
+    expect(out.goals).toBeUndefined()
+  })
+
+  it('records a knockout won inside 90 minutes without marking it a.e.t.', () => {
+    const out = withRec({ home: 'Germany', away: 'Denmark', score: { ft: [2, 0] }, g1: [], g2: [] })
+    expect(out.score).toEqual([2, 0])
+    expect(out.aet).toBeUndefined()
+    expect(out.pens).toBeUndefined()
+  })
+})

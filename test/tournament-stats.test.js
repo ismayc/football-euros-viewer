@@ -39,6 +39,16 @@ describe('teamRecord', () => {
     expect(r.cleanSheets).toBe(0)
   })
 
+  it('reads a shootout from the second-named team’s point of view', () => {
+    // Every other shootout here is scored from t1's side. For the team listed
+    // second the pens pair has to be flipped, or a win from the spot is recorded
+    // as a defeat.
+    const won = teamRecord([m({ stage: 'QF', t1: 'Ghana', t2: 'Denmark', score: [1, 1], pens: [3, 5] })], 'Denmark')
+    expect(won.w).toBe(1)
+    expect(won.pensWon).toBe(1)
+    expect(won.pensLost).toBe(0)
+  })
+
   it('counts a shootout defeat, and orders several shootouts by kickoff', () => {
     // Losing from the spot is the other half of the penalties branch: it books a
     // loss, not a draw, and increments pensLost rather than pensWon.
@@ -295,5 +305,46 @@ describe('tournamentTotals', () => {
     expect(t.et).toBe(1)
     expect(t.shootouts).toBe(1)
     expect(t.live).toBe(1)
+  })
+})
+
+describe('aggregates over partial goal data', () => {
+  it('counts a side that recorded no goals list at all', () => {
+    // ESPN publishes goals per side; a clean sheet often arrives as an absent
+    // list rather than an empty one, which must not stop the other side counting.
+    const scorers = topScorers([m({ score: [1, 0], goals: { t1: [{ name: 'Lone Scorer' }] } })])
+    expect(scorers.map((s) => s.name)).toEqual(['Lone Scorer'])
+  })
+})
+
+describe('applyPlayerStatOverrides', () => {
+  const base = [{ name: 'Known Player', goals: 3, assists: 1, minutes: 200 }]
+
+  it('returns the list untouched when there is nothing to override', () => {
+    expect(applyPlayerStatOverrides(base, null)).toBe(base)
+    expect(applyPlayerStatOverrides(base, [])).toBe(base)
+  })
+
+  it('leaves a field alone when the override does not carry it', () => {
+    // A reconciliation that resolved minutes but not assists must not blank the
+    // assists it already had.
+    const [out] = applyPlayerStatOverrides(base, [{ name: 'Known Player', minutes: 250 }])
+    expect(out).toMatchObject({ assists: 1, minutes: 250 })
+    const [out2] = applyPlayerStatOverrides(base, [{ name: 'Known Player', assists: 4 }])
+    expect(out2).toMatchObject({ assists: 4, minutes: 200 })
+  })
+
+  it('adds a player the list did not have, with only what the override knows', () => {
+    const out = applyPlayerStatOverrides(base, [{ name: 'New Name', assists: 2 }])
+    const added = out.find((e) => e.name === 'New Name')
+    // goals stays null — an override is about assists and minutes, and claiming
+    // zero goals for someone the goal data never mentioned would be a guess.
+    expect(added).toMatchObject({ goals: null, assists: 2 })
+    expect(added.minutes).toBeUndefined()
+  })
+
+  it('copes with no existing list to merge into', () => {
+    const out = applyPlayerStatOverrides(undefined, [{ name: 'Solo', minutes: 90 }])
+    expect(out).toEqual([{ name: 'Solo', goals: null, assists: undefined, minutes: 90 }])
   })
 })

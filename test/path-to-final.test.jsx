@@ -153,6 +153,27 @@ describe('PathPicker', () => {
     expect(screen.queryByText(/Up next/)).not.toBeInTheDocument()
   })
 
+  it('clears the path by picking the empty option back out of the dropdown', () => {
+    // The "Pick a team…" entry carries an empty value; choosing it has to clear
+    // the highlight rather than trace a team with no name.
+    renderWith(<PathPicker byNum={matchesByNum(withPath(R16_TEAMS))} />)
+    const select = screen.getByLabelText(/Path to the Final/)
+    fireEvent.change(select, { target: { value: 'Germany' } })
+    expect(screen.getByText(/Up next/)).toBeInTheDocument()
+    fireEvent.change(select, { target: { value: '' } })
+    expect(screen.queryByText(/Up next/)).not.toBeInTheDocument()
+    expect(select.value).toBe('')
+  })
+
+  it('summarizes a team that has reached the Final but not yet played it', () => {
+    // Everything up to the Final is decided and the team is in it — one step
+    // short of the champions line, which only lands once the Final is final.
+    const inTheFinal = { ...fullRun, 51: { t1: 'Germany', t2: 'Denmark' } }
+    renderWith(<PathPicker byNum={matchesByNum(withPath(inTheFinal))} />, { pathTeam: 'Germany' })
+    expect(screen.getByText(/In the Final/)).toBeInTheDocument()
+    expect(screen.queryByText(/Champions/)).toBeNull()
+  })
+
   it('summarizes "through to the next round" after winning its deepest match', () => {
     // Won the R16 (37) and the QF (45); the semi-final (49) doesn't list Germany
     // yet → "through to the Semi-final".

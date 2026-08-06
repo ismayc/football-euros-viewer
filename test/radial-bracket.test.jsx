@@ -148,6 +148,24 @@ describe('RadialBracket', () => {
     expect(done.container.querySelectorAll('.rb-time').length).toBe(0)
   })
 
+  it('drops the spotlight once the tie it marked is final', () => {
+    // The halo follows a match through the day it is played and goes out when
+    // the result lands — a played tie on today's date is NOT spotlit, while the
+    // same tie still in progress is.
+    vi.useFakeTimers()
+    try {
+      const board = playedBracket()
+      const tie = board.find((m) => m.stage !== 'Group' && Array.isArray(m.score))
+      vi.setSystemTime(new Date(tie.ko))
+      const done = renderRB(board)
+      const haloed = done.container.querySelectorAll('.rb-halo').length
+      const live = renderRB(board.map((m) => (m.num === tie.num ? { ...m, live: { clock: "20'" } } : m)))
+      expect(live.container.querySelectorAll('.rb-halo').length).toBeGreaterThan(haloed)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('spotlights matches playing today with a halo', () => {
     vi.useFakeTimers()
     try {
@@ -300,5 +318,17 @@ describe('RadialBracket — every clickable, and the shapes it guards against', 
     const { container } = renderRB(groupOnly)
     expect(container.querySelector('.rb-svg')).toBeTruthy()
     expect(container.querySelectorAll('.rb-node.rb-click').length).toBe(0)
+  })
+})
+
+describe('RadialBracket — a board missing the ties around its champion', () => {
+  it('crowns a champion whose route is not on the board', () => {
+    // A board carrying nothing but a decided Final: the champion is known, but
+    // there is no route back through the rounds to light up.
+    const finalNum = 51
+    const finalOnly = playedBracket().filter((m) => m.num === finalNum)
+    const { container } = renderRB(finalOnly)
+    expect(container.querySelector('.rb-svg')).toBeTruthy()
+    expect(container.querySelector('.rb-node.on-trail')).toBeNull()
   })
 })

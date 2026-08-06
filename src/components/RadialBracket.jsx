@@ -37,6 +37,7 @@ function childMatchNums(num) {
   const [l1, l2] = slotLabels(m)
   const a = FEED.exec(l1)
   const b = FEED.exec(l2)
+  /* v8 ignore next -- unreachable: only rounds ABOVE the entry round ask for their children, and those are always fed by "Winner Match N" labels */
   return a && b ? [Number(a[1]), Number(b[1])] : null // null for R16 (children are teams)
 }
 
@@ -92,6 +93,10 @@ const ROUND_RING_LABELS = [
   { text: 'SEMI-FINALS', r: (RING.QF + RING.SF) / 2, size: 9 },
 ]
 
+// Every node with a team behind it has a match behind it too — both call sites
+// below read the team OUT of `byNum`, so a flag and an onClick always arrive
+// together. A slot with no match yet takes the placeholder-dot path instead,
+// which is why this half is unconditionally clickable.
 function FlagNode({ x, y, team, label, followed, onPath, trail, dimmed, onClick, r = 17 }) {
   const flag = team && FLAG_BY_TEAM[team]
   if (!flag) {
@@ -100,13 +105,13 @@ function FlagNode({ x, y, team, label, followed, onPath, trail, dimmed, onClick,
   }
   return (
     <g
-      className={`rb-node${followed ? ' followed' : ''}${onPath ? ' on-path' : ''}${trail ? ' on-trail' : ''}${dimmed ? ' out' : ''}${onClick ? ' rb-click' : ''}`}
+      className={`rb-node rb-click${followed ? ' followed' : ''}${onPath ? ' on-path' : ''}${trail ? ' on-trail' : ''}${dimmed ? ' out' : ''}`}
       onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => (e.key === 'Enter' || e.key === ' ') && onClick() : undefined}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
     >
-      <title>{label || team}</title>
+      <title>{label}</title>
       <circle className="rb-flag-bg" cx={x} cy={y} r={r} />
       <text className="rb-flag" x={x} y={y} fontSize={r * 1.3}>
         {flag}

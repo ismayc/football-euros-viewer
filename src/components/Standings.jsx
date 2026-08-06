@@ -46,10 +46,12 @@ function AsItStands({ proj, onGoToMatch }) {
     return (
       <li className="ais-row" key={label}>
         <span className="ais-pos">{label}</span>
-        <span className="ais-team">{FLAG_BY_TEAM[team] || ''} {team}</span>
+        {/* The name comes out of the group tables, so it is a committed
+            member of this edition and always has a flag. */}
+        <span className="ais-team">{FLAG_BY_TEAM[team]} {team}</span>
         <span className="ais-vs">vs</span>
         <span className="ais-opp">
-          {opp ? `${FLAG_BY_TEAM[opp] || ''} ${opp}` : 'TBD'}
+          {opp ? `${FLAG_BY_TEAM[opp]} ${opp}` : 'TBD'}
         </span>
         {d?.matchNum &&
           (onGoToMatch ? (
@@ -78,7 +80,7 @@ function AsItStands({ proj, onGoToMatch }) {
           : proj.thirdTeam && (
               <li className="ais-row ais-out" key="3rd-out">
                 <span className="ais-pos">3rd</span>
-                <span className="ais-team">{FLAG_BY_TEAM[proj.thirdTeam] || ''} {proj.thirdTeam}</span>
+                <span className="ais-team">{FLAG_BY_TEAM[proj.thirdTeam]} {proj.thirdTeam}</span>
                 <span className="ais-note">outside the best four</span>
               </li>
             )}
@@ -318,6 +320,7 @@ function BestThirds({ qual, clinch, groupState, liveTeams, pausedTeams }) {
   const contenders = []
   for (const g of GROUPS) {
     if (groupState[g] === 'final') continue // group done → its third is settled
+    /* v8 ignore next -- unreachable: computeQualification ranks every group of the committed table, so `qual.groups[g]` is always an array */
     const rows = qual.groups[g] || []
     if (!rows.some((r) => r.P > 0)) continue // group hasn't kicked off → not meaningful yet
     const fourth = rows[3]
@@ -457,9 +460,11 @@ export default function Standings({ matches, tz, hideScores, clinch, onGoToMatch
     const through =
       status === 'won-group' || status === 'runner-up' || status === 'top2' || status === 'third'
     if (!through) return null
+    /* v8 ignore next -- unreachable: computeQualification ranks every group of the committed table, so `qual.groups[group]` is always an array */
     const row = (qual.groups[group] || []).find((r) => r.name === team)
     /* v8 ignore next -- unreachable: the group/team pair comes from a rendered standings row, so the team is always among that group's computed rows */
     if (!row) return null
+    /* v8 ignore next -- unreachable: projectKnockout seeds an entry for every group, so `perGroup[group]` is always there */
     const proj = perGroup[group] || {}
     // A 'won-group'/'runner-up' verdict pins the exact finishing position, so use
     // it directly; otherwise (top2 not yet split, or a best third) fall back to

@@ -26,6 +26,12 @@ describe('parseQuery', () => {
     expect(tokens).toContainEqual({ field: 'city', value: 'Dallas' })
   })
 
+  it('drops an unrecognised field that has nothing after it', () => {
+    // Mid-typing: the viewer has typed the colon but not the value yet. There is
+    // nothing to search for, so neither a token nor a scrap of free text.
+    expect(parseQuery('coach:')).toEqual({ free: '', tokens: [] })
+  })
+
   it('treats an unknown field as free text', () => {
     const { free, tokens } = parseQuery('bogus: value')
     expect(tokens).toEqual([])
@@ -107,7 +113,16 @@ describe('matchesSearch — free text', () => {
   })
 
   it('handles a knockout match (no group) in the haystack', () => {
-    const ko = MATCHES.find((m) => m.stage !== 'Group')
+    // A knockout tie has no group letter to contribute, so the haystack is built
+    // with that fragment left empty — the stage label still has to be searchable.
+    // Taken from the played schedule so the two sides are real teams rather than
+    // the "Winner Group A" labels an undrawn tie carries, which would put the
+    // word "group" into the haystack by the back door.
+    const ko = PLAYED.find((m) => m.stage !== 'Group')
+    expect(ko.group).toBeUndefined()
+    expect(matchesSearch(ko, venueOf(ko), { tokens: [], free: 'round of 16' })).toBe(true)
+    expect(matchesSearch(ko, venueOf(ko), { tokens: [], free: 'group' })).toBe(false)
+    // An empty query is not a filter at all and keeps everything.
     expect(matchesSearch(ko, venueOf(ko), { tokens: [], free: '' })).toBe(true)
   })
 })
