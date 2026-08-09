@@ -16,6 +16,7 @@ import {
   clinchHeadline,
   clinchBadge,
   goalCap,
+  groupPositionBounds,
   scorelinesUpTo,
 } from '../src/utils/clinch.js'
 
@@ -364,5 +365,46 @@ describe('newlyClinched — detects new verdicts and upgrades', () => {
     expect(computeClinch(before)['Germany']).toBe('top2')
     const changes = newlyClinched(before, after)
     expect(changes).toContainEqual({ team: 'Germany', group: 'A', status: 'won-group' })
+  })
+})
+
+describe('groupPositionBounds', () => {
+  it('reads 1–4 for every team while nothing has been played (points fallback)', () => {
+    // Six remaining games per group is far over the scoreline budget, so every
+    // bound comes from the sound points-only pass — and with no results at all,
+    // every position is genuinely open.
+    expect(Math.pow(scorelinesUpTo(goalCap([])).length, 6)).toBeGreaterThan(500_000)
+    const bounds = groupPositionBounds(MATCHES)
+    for (const g of GROUPS) {
+      for (const t of TEAMS[g]) expect(bounds[t.name]).toEqual({ best: 1, worst: 4 })
+    }
+  })
+
+  it('is exact (goal difference and head-to-head included) when the group is enumerable', () => {
+    // Group A with two games left (81² scorelines — enumerable): Hungary played
+    // all three (1 point), Germany beat Scotland, the Switzerland games remain
+    // (M15 Scotland v Switzerland, M26 Switzerland v Germany).
+    const bounds = groupPositionBounds(
+      withScores({ 14: [2, 0], 2: [0, 2], 25: [1, 1], 1: [2, 0] }),
+    )
+    expect(bounds['Germany']).toEqual({ best: 1, worst: 2 })
+    expect(bounds['Switzerland']).toEqual({ best: 1, worst: 3 })
+    expect(bounds['Scotland']).toEqual({ best: 2, worst: 4 })
+    expect(bounds['Hungary']).toEqual({ best: 3, worst: 4 })
+  })
+
+  it('locks every position once a group is complete — the committed real results', () => {
+    // The committed schedule carries Euro 2024's real scores, so every group is
+    // final and every bound collapses. Group A finished Germany 7, Switzerland 5,
+    // Hungary 3, Scotland 1.
+    const bounds = groupPositionBounds(PLAYED)
+    expect(bounds['Germany']).toEqual({ best: 1, worst: 1 })
+    expect(bounds['Switzerland']).toEqual({ best: 2, worst: 2 })
+    expect(bounds['Hungary']).toEqual({ best: 3, worst: 3 })
+    expect(bounds['Scotland']).toEqual({ best: 4, worst: 4 })
+    // And nothing anywhere is left open.
+    for (const g of GROUPS) {
+      for (const t of TEAMS[g]) expect(bounds[t.name].best).toBe(bounds[t.name].worst)
+    }
   })
 })

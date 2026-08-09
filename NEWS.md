@@ -4,6 +4,19 @@ A dated changelog for the Euro 2024 Schedule Viewer. Each heading is a calendar
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-08-09
+
+- **Finish column in the group tables.** Each standings row now ends with a
+  "Fin" column showing the final group positions still arithmetically possible
+  (e.g. `1–3`), collapsing to a single gold number once the finish is locked.
+  The bounds come from the clinch engine's own enumeration — exact (goal
+  difference and head-to-head included) whenever the group's remaining
+  scorelines are enumerable, sound points-only bounds otherwise — via a new
+  `groupPositionBounds` export, so the column can never contradict the badges.
+  With the committed Euro 2024 results every one of the six groups is final, so
+  all 24 cells read a locked gold position. Ported from the World Cup viewer;
+  mirrors the Finish column the WNBA/NBA/NFL viewers carry.
+
 ## 2026-08-08
 
 - **Condensed view strip.** Once the header's view switch scrolls out of view, a

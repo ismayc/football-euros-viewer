@@ -384,3 +384,32 @@ describe('Standings', () => {
     expect(screen.getAllByRole('button', { name: /^Unfollow / }).length).toBeGreaterThan(0)
   })
 })
+
+describe('Finish column', () => {
+  it('shows a wide-open 1–4 range for every team before any result', () => {
+    const { container } = renderStandings()
+    const headers = [...container.querySelectorAll('.standings-table th.col-finish')]
+    expect(headers).toHaveLength(6) // one per group table
+    const cells = [...container.querySelectorAll('.standings-table .finish')]
+    expect(cells).toHaveLength(24)
+    expect(cells.every((c) => c.textContent === '1–4')).toBe(true)
+    expect(container.querySelector('.standings-table .finish-locked')).toBeNull()
+  })
+
+  it('collapses to locked gold positions with the committed (complete) results', () => {
+    const { container } = render(
+      <FollowProvider>
+        <Standings matches={PLAYED} hideScores={false} />
+      </FollowProvider>,
+    )
+    const locked = [...container.querySelectorAll('.standings-table .finish-locked')]
+    expect(locked).toHaveLength(24) // every team's finish is settled
+    // Each group table reads 1..4 top to bottom.
+    for (const table of container.querySelectorAll('.group-card .standings-table')) {
+      const cells = [...table.querySelectorAll('.finish-locked')]
+      expect(cells.map((c) => c.textContent)).toEqual(['1', '2', '3', '4'])
+    }
+    // The legend explains the marker.
+    expect(screen.getByText(/positions still arithmetically/)).toBeInTheDocument()
+  })
+})

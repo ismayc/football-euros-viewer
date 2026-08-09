@@ -442,6 +442,13 @@ describe('App coverage', () => {
       await vi.advanceTimersByTimeAsync(100)
       expect(region().textContent).toBe(before)
       expect(region().textContent).not.toMatch(/Flood/)
+      // The refresh click's fetch can resolve after those assertions on a
+      // loaded runner, leaving them vacuously green — so also drive through the
+      // next scheduled live poll, which demonstrably delivers the flood payload.
+      // Without the suppression guard, six fresh Flood toasts (added seconds
+      // ago, well inside their 8s lifetime) would be on screen right now.
+      await vi.advanceTimersByTimeAsync(31000)
+      expect(screen.queryByText(/Flood/)).toBeNull()
     } finally {
       vi.useRealTimers()
     }
