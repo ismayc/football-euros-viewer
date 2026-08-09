@@ -6,6 +6,11 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-08-09
 
+- **Backfill days now follow the family's Eastern-day convention.** ESPN
+  buckets `dates=` queries by the US-Eastern day; Euro 2024's CEST kickoffs
+  never cross the UTC/Eastern boundary so nothing was ever missed here, but
+  `historyDates` now computes days in America/New_York to match the fix that
+  landed in the World Cup, Copa, and Women's World Cup viewers today.
 - **Spain are no longer the "2026 World Champions".** The champion banner and
   the Next Match champion card still carried the World Cup scaffold's title
   string — live on the site since launch — and the two tests that touch those
