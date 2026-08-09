@@ -27,12 +27,12 @@ describe('ChampionBanner', () => {
     renderBanner(final())
     renderBanner(final({ score: [1, 1] })) // drawn, no shootout yet
     renderBanner(final({ score: [2, 0], live: { minute: 88 } })) // live = provisional
-    expect(screen.queryByText(/World Champions/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Euro 2024 Champions/)).not.toBeInTheDocument()
   })
 
   it('crowns the champion once the Final is final (pens included)', () => {
     renderBanner(final({ score: [1, 1], pens: [4, 2] }))
-    expect(screen.getByText(/World Champions/)).toBeInTheDocument()
+    expect(screen.getByText(/Euro 2024 Champions/)).toBeInTheDocument()
     expect(screen.getByText('Denmark')).toBeInTheDocument()
   })
 
@@ -44,7 +44,7 @@ describe('ChampionBanner', () => {
 
   it('stays hidden in spoiler-free mode', () => {
     renderBanner(final({ score: [3, 1] }), { hideScores: true })
-    expect(screen.queryByText(/World Champions/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Euro 2024 Champions/)).not.toBeInTheDocument()
   })
 
   it('renders nothing at all when the board has no Final', () => {
@@ -60,6 +60,6 @@ describe('ChampionBanner', () => {
 
   it('stays hidden when the Final slots are still placeholders', () => {
     renderBanner(final({ t1: 'Winner Match 101', t2: 'Winner Match 102', score: [1, 0] }))
-    expect(screen.queryByText(/World Champions/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Euro 2024 Champions/)).not.toBeInTheDocument()
   })
 })

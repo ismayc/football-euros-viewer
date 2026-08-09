@@ -49,7 +49,7 @@ describe('NextMatch', () => {
     }
     renderNM([final])
     expect(screen.getByText('Argentina')).toBeInTheDocument()
-    expect(screen.getByText('2026 World Champions!')).toBeInTheDocument()
+    expect(screen.getByText('Euro 2024 Champions!')).toBeInTheDocument()
     expect(screen.getByText(/Runners-up:.*France/)).toBeInTheDocument()
   })
 
@@ -59,7 +59,7 @@ describe('NextMatch', () => {
     const final = { num: 104, stage: 'Final', t1: 'Argentina', t2: 'France', venue: 'metlife', ko: '2024-07-14T15:00:00-04:00' }
     renderNM([final])
     expect(screen.getByText(/tournament has concluded/)).toBeInTheDocument()
-    expect(screen.queryByText('2026 World Champions!')).not.toBeInTheDocument()
+    expect(screen.queryByText('Euro 2024 Champions!')).not.toBeInTheDocument()
   })
 
   it('shows the next upcoming match with a multi-day countdown', () => {

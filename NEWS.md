@@ -6,6 +6,12 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-08-09
 
+- **Spain are no longer the "2026 World Champions".** The champion banner and
+  the Next Match champion card still carried the World Cup scaffold's title
+  string — live on the site since launch — and the two tests that touch those
+  components locked the wrong words in. Both now crown the Euro 2024
+  Champions, tests updated in the same change.
+
 - **Finish column in the group tables.** Each standings row now ends with a
   "Fin" column showing the final group positions still arithmetically possible
   (e.g. `1–3`), collapsing to a single gold number once the finish is locked.

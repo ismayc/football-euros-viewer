@@ -70,7 +70,7 @@ export default function NextMatch({ matches, tz }) {
             <span className="nm-champ-trophy" aria-hidden="true">🏆</span>
             <span className="nm-champ-flag">{FLAG_BY_TEAM[result.winner] || ''}</span>
             <span className="nm-champ-name">{result.winner}</span>
-            <span className="nm-champ-title">2026 World Champions!</span>
+            <span className="nm-champ-title">Euro 2024 Champions!</span>
           </span>
           {result.loser && (
             <span className="nm-champ-runner">

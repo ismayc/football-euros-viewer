@@ -19,7 +19,7 @@ export default function ChampionBanner({ match, hideScores }) {
         <span key={i} className="confetti" style={{ '--i': i }} aria-hidden="true" />
       ))}
       <span className="champ-text">
-        👑 {FLAG_BY_TEAM[champion]} <strong>{champion}</strong> are the 2026 World Champions! 🏆
+        👑 {FLAG_BY_TEAM[champion]} <strong>{champion}</strong> are the Euro 2024 Champions! 🏆
       </span>
     </button>
   )
