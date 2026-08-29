@@ -4,6 +4,22 @@ A dated changelog for the Euro 2024 Schedule Viewer. Each heading is a calendar
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-08-29
+
+- **Fixed: the champion banner never appeared.** Spain won Euro 2024 and the app
+  never said so. `App.jsx` looked for the Final as `m.num === 104`, the number of
+  the World Cup 2026 Final in the sibling repo this one was scaffolded from. Euro
+  2024 ends at match 51, so the lookup found nothing and the banner silently
+  rendered as nothing. It now reads the Final from `BRACKET.final[0]`, the same way
+  the Women's World Cup and Copa América siblings already did.
+- The existing `champion-banner` test could not have caught this: it renders the
+  component directly with a fabricated match, so it only ever proved the component
+  works. A new `champion-wiring` test renders the real App against the real
+  committed board and asserts Spain is crowned, and it was confirmed to fail
+  against the old hardcoded 104.
+- Rewrote the repo's `verify` skill, which was a byte-identical copy of the World
+  Cup viewer's and described that app instead of this one.
+
 ## 2026-08-16
 
 - **The data scripts now fetch from `site.web.api.espn.com`.** ESPN's edge started
