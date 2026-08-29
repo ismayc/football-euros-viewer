@@ -1,6 +1,6 @@
 // Independent backup / score-validator from TheSportsDB — free, CORS-open
 // (Access-Control-Allow-Origin: *), no personal signup (uses the public test
-// key). It carries the 2026 schedule and final scores, so it's a third opinion
+// key). It carries the Euro 2024 schedule and final scores, so it's a third opinion
 // on game scores alongside OpenFootball (record) and ESPN (live).
 //
 // Free-tier limits: the livescore endpoint is paywalled, so this is FINAL scores
@@ -10,10 +10,11 @@
 //
 // Endpoint: eventsday for league 4502 ("UEFA European Championship"), fetched across a small
 // date window around "now". (The eventsSEASON endpoint silently freezes after the
-// opening days — it stalled at 5 events on 2026-06-13 — whereas the per-day
-// endpoint stays current. So we mirror the ESPN adapter: a ±1-day window.)
-// strTimestamp is UTC (e.g. "2026-06-11T19:00:00" == our 15:00 ET kickoff), so
-// we append "Z" to get the right instant.
+// opening days, whereas the per-day endpoint stays current. That was observed in the
+// World Cup viewer this adapter was scaffolded from, where eventsSEASON stalled at 5
+// events on 2026-06-13. So we mirror the ESPN adapter: a ±1-day window.)
+// strTimestamp is UTC (e.g. "2024-06-14T19:00:00" is Germany vs Scotland, the 21:00
+// CEST opener, 15:00 ET), so we append "Z" to get the right instant.
 
 import { normalizeTeam, isRealTeam, pairKey } from './results.js'
 

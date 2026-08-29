@@ -49,6 +49,20 @@ data/source updates, deployment). Newest day on top.
   deploy job alone carries a job-level `pages` group so Pages publishes stay serialized.
   The eight sibling repos and the workflow template in `sports-viewer-meta` already had
   this shape; these four viewers were the last without it.
+- **Fixed World Cup details left in the TheSportsDB adapter's comments.** The header
+  claimed the feed "carries the 2026 schedule", and the worked `strTimestamp` example was
+  the World Cup 2026 opener. Both came from the viewer this file was scaffolded from. The
+  example is now Germany vs Scotland, the real Euro 2024 opener, checked against this
+  repo's own committed kickoff. The note about the eventsSEASON endpoint stalling is real
+  but was observed in the World Cup viewer, and now says so instead of implying it was
+  seen here. Comments only; no code changed.
+- **Fixed a racy assertion in the StatsView override test.** The test waits for a player's
+  name, then reads his assists and minutes cells. The name appears as soon as the aggregate
+  fetch resolves, but the values under test come from a second fetch that lands a render
+  later, so on a loaded runner the assertion read the pre-override numbers. It failed once
+  in three full local runs today. The assertion now waits for the overridden values instead
+  of the name. Confirmed with teeth: with the override deliberately delayed the old
+  assertion fails and the new one passes.
 
 ## 2026-08-16
 
