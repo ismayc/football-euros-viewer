@@ -6,6 +6,14 @@ data/source updates, deployment). Newest day on top.
 
 ## 2026-08-29
 
+- **Fixed: the Calendar modal offered "All 104 matches".** 104 is the World Cup
+  2026 total; Euro 2024 has 51. This was the same World Cup constant that produced
+  the champion-banner bug above, surviving in a second file. A test asserted the
+  wrong label, so it was covered rather than caught.
+- **Fixed: live scores could not load at all.** The browser code called
+  `site.api.espn.com`, which now 403s any request with a browser User-Agent and
+  returns no CORS headers with it. Moved to `site.web.api`, which serves the
+  identical routes.
 - **Fixed: the champion banner never appeared.** Spain won Euro 2024 and the app
   never said so. `App.jsx` looked for the Final as `m.num === 104`, the number of
   the World Cup 2026 Final in the sibling repo this one was scaffolded from. Euro

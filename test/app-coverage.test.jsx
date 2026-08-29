@@ -101,7 +101,7 @@ describe('App coverage', () => {
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: /Calendar/ }))
     const dialog = screen.getByRole('dialog')
-    expect(within(dialog).getByText(/All 104 matches/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/All 51 matches/)).toBeInTheDocument()
     fireEvent.click(within(dialog).getByRole('button', { name: /Close/ }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })

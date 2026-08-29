@@ -35,7 +35,7 @@ describe('CalendarModal', () => {
   it('renders the all-matches subscribe row and download buttons (no followed teams)', () => {
     renderModal()
     expect(screen.getByText('📅 Calendar')).toBeInTheDocument()
-    expect(screen.getByText('All 104 matches')).toBeInTheDocument()
+    expect(screen.getByText('All 51 matches')).toBeInTheDocument()
     // "My teams" rows/buttons absent when count === 0.
     expect(screen.queryByText(/My teams/)).not.toBeInTheDocument()
     expect(screen.getByText(`All matches (${MATCHES.length})`)).toBeInTheDocument()
@@ -83,7 +83,7 @@ describe('CalendarModal', () => {
     const writeText = vi.fn(() => Promise.resolve())
     Object.assign(navigator, { clipboard: { writeText } })
     renderModal()
-    const row = screen.getByText('All 104 matches').closest('.cal-row')
+    const row = screen.getByText('All 51 matches').closest('.cal-row')
     fireEvent.click(within(row).getByText('Copy URL'))
     expect(writeText).toHaveBeenCalled()
     // Async state update flips the label to "Copied!".
@@ -96,7 +96,7 @@ describe('CalendarModal', () => {
     const writeText = vi.fn(() => Promise.reject(new Error('denied')))
     Object.assign(navigator, { clipboard: { writeText } })
     renderModal()
-    const row = screen.getByText('All 104 matches').closest('.cal-row')
+    const row = screen.getByText('All 51 matches').closest('.cal-row')
     fireEvent.click(within(row).getByText('Copy URL'))
     await vi.waitFor(() => expect(writeText).toHaveBeenCalled())
     expect(within(row).queryByText('Copied!')).not.toBeInTheDocument()
