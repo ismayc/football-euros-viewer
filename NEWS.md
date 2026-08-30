@@ -19,6 +19,14 @@ data/source updates, deployment). Newest day on top.
   committed schedule, since a feed that fetches its own upstream inherits errors the build
   corrects. Starts on days the schedule has no games for are treated as newly announced
   fixtures, not faults.
+- **The calendar function is inside the coverage gate now.** `coverage.include` was
+  `src/**`, so the `webcal://` subscription endpoint, real shipped code that a
+  subscriber's calendar hits directly, was measured by nothing while the badge read
+  100%. Its handler had no tests at all; it now has them, and the file is gated at 100%
+  like everything else. The new tests cover the parts that decide whether a subscriber
+  gets a usable calendar: that an offset-less kickoff is read in the right zone, that
+  knockout slot codes become readable names, and that an upstream outage produces an
+  error rather than a silently empty calendar.
 
 ## 2026-08-29
 
