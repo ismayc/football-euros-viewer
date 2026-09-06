@@ -4,6 +4,19 @@ A dated changelog for the Euro 2024 Schedule Viewer. Each heading is a calendar
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-06
+
+- **The calendar feed and the downloaded file stamped different UID domains.**
+  `netlify/functions/calendar.js` said `@euroviewer` where `src/utils/ics.js` says
+  `@footballeurosviewer`, a copy artifact. It changed nothing on its own, because the UID
+  bodies already differ between the two sources, but it would have been a second, silent
+  mismatch for anyone aligning them. The feed test now derives the expected domain from
+  the download path instead of restating the literal.
+- **`groupColors.js` now derives its map from the tournament's groups** rather than
+  listing six fixed letters. Six is correct here, so nothing changes on screen; the same
+  file was wrong in both sibling viewers that share it.
+- Added the stage-search coverage test that walks `STAGE_ORDER`.
+
 ## 2026-09-05 (later)
 
 - **The visual identity is now the family's results-board system.** The old look was a set

@@ -67,8 +67,18 @@ function esc(t) {
 }
 
 // The feed carries no match numbers, so a UID is built from the fixture itself.
+//
+// The domain half must stay `@footballeurosviewer`, matching src/utils/ics.js. It
+// said `@euroviewer` here, which was a copy artifact: harmless today only because
+// the UID BODIES already differ between the download and the feed, so the two
+// sources produce separate calendar entries either way. Whoever aligns the bodies
+// (world-cup-viewer's feed already reads `m.num` and matches its download exactly)
+// should not also have to notice a second, silent mismatch.
 function uid(m) {
-  return `euro2024-${m.round}-${norm(m.team1)}-${norm(m.team2)}-${m.date}@euroviewer`.replace(/\s+/g, '_')
+  return `euro2024-${m.round}-${norm(m.team1)}-${norm(m.team2)}-${m.date}@footballeurosviewer`.replace(
+    /\s+/g,
+    '_',
+  )
 }
 
 function vevent(m) {

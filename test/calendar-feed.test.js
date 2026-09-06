@@ -11,6 +11,22 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { handler } from '../netlify/functions/calendar.js'
+import { buildICS } from '../src/utils/ics.js'
+
+// The UID domain the DOWNLOADED file stamps. Read out of the download path rather
+// than written here, so this file states the invariant (both sources agree) rather
+// than a second copy of the literal.
+const UID_DOMAIN = buildICS({
+  num: 1,
+  stage: 'Group',
+  group: 'A',
+  t1: 'Germany',
+  t2: 'Scotland',
+  venue: 'olympiastadion',
+  ko: '2024-06-14T19:00:00Z',
+})
+  .match(/UID:[^\s]*@([^\s\r]+)/)[1]
+  .trim()
 
 const ok = (payload) =>
   vi.fn(async () => ({ ok: true, json: async () => payload }))
@@ -103,7 +119,9 @@ describe('the calendar handler', () => {
   it('identifies a match with no number by its teams and date', async () => {
     global.fetch = ok({ matches: [match({ num: undefined, round: 'Final' })] })
     const body = (await handler({ queryStringParameters: {} })).body
-    expect(body).toMatch(/UID:euro2024-Final-Germany-Scotland-2024-06-14@euroviewer/)
+    expect(body).toMatch(
+      new RegExp(`UID:euro2024-Final-Germany-Scotland-2024-06-14@${UID_DOMAIN}`),
+    )
   })
 
   it('serves an empty calendar rather than failing when the feed has no matches', async () => {
@@ -166,7 +184,18 @@ describe('the calendar handler', () => {
 
   it('builds an id for a match with neither a number nor a named side', async () => {
     global.fetch = ok({ matches: [match({ num: undefined, team1: undefined, round: 'Final' })] })
-    expect((await handler({ queryStringParameters: {} })).body).toContain('@euroviewer')
+    expect((await handler({ queryStringParameters: {} })).body).toContain(`@${UID_DOMAIN}`)
+  })
+
+  it('stamps feed events with the same UID domain the downloaded file uses', async () => {
+    // The two used to disagree (@euroviewer here, @footballeurosviewer there). It
+    // was invisible because the UID bodies differ too, so both sources produce
+    // separate calendar entries regardless. Derive the domain from the download
+    // path so the pair cannot drift apart again.
+    global.fetch = ok({ matches: [match({ num: 12 })] })
+    const body = (await handler({ queryStringParameters: {} })).body
+    expect(body).toContain(`@${UID_DOMAIN}`)
+    expect(body).not.toMatch(/UID:[^\s]*@(?!footballeurosviewer)/)
   })
 
   it('expands a loser-of-match slot as well', async () => {
