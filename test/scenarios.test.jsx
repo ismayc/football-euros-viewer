@@ -140,14 +140,14 @@ describe('ScenariosView', () => {
     // Group A's "1st" projected line is confirmed without any picks.
     render(<ScenariosView matches={twoOpen} />)
     const card = screen.getByText('Group A').closest('.sc-card')
-    expect(card.querySelector('.sc-r16-lock')).toBeInTheDocument()
+    expect(card.querySelector('.sc-entry-lock')).toBeInTheDocument()
     // The bare checkmark carries an accessible label but no "Matchup confirmed" text.
     expect(within(card).getByLabelText('Matchup confirmed')).toBeInTheDocument()
     expect(within(card).queryByText(/Matchup confirmed/)).toBeNull()
     // Group B's winner meets a third-place slot, which can't settle while Group A
     // is unfinished — so that card shows no confirmed matchup yet.
     const open = screen.getByText('Group B').closest('.sc-card')
-    expect(open.querySelector('.sc-r16-lock')).toBeNull()
+    expect(open.querySelector('.sc-entry-lock')).toBeNull()
   })
 
   it('exposes goal steppers once a result is set, and they adjust the score', () => {
