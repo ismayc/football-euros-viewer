@@ -105,7 +105,7 @@ function downloadText(text, filename) {
 }
 
 export function downloadICS(match) {
-  downloadText(buildICS(match), `${LEAGUE.ics.uidPrefix}${match.num}.ics`)
+  downloadText(buildICS(match), `${LEAGUE.ics.filenameBase}-match-${match.num}.ics`)
 }
 
 // A whole calendar of matches (used by the "download all / my teams / filtered" buttons).

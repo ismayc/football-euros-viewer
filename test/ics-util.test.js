@@ -9,6 +9,7 @@ import {
 } from '../src/utils/ics.js'
 import { MATCHES as PLAYED } from '../src/data/matches.js'
 import { unscored } from './helpers/tournament.js'
+import { LEAGUE } from '../src/config/league.js'
 // This edition is finished, so the committed schedule ships with every result
 // in it. These tests were written against a schedule that had none, so they
 // work from a blank board; `PLAYED` is there when the real results are wanted.
@@ -107,6 +108,22 @@ describe('downloadICS / downloadICSCollection (DOM download)', () => {
     expect(URL.createObjectURL).toHaveBeenCalledOnce()
     expect(clickSpy).toHaveBeenCalledOnce()
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:x')
+    clickSpy.mockRestore()
+  })
+
+  it('names a single-match file from the same base as the whole-calendar one', () => {
+    // These used to disagree: one match downloaded as 'euro2024-match-5.ics' while the
+    // full calendar downloaded as 'euro-2024.ics'. Nothing asserted the single-match
+    // name, so the two drifted apart unnoticed. Both now come from ics.filenameBase.
+    let name = null
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function () {
+        name = this.download
+      })
+    downloadICS({ ...groupMatch, num: 5 })
+    expect(name).toBe(`${LEAGUE.ics.filenameBase}-match-5.ics`)
+    expect(name).toBe('euro-2024-match-5.ics')
     clickSpy.mockRestore()
   })
 
