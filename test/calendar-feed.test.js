@@ -12,6 +12,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { handler } from '../netlify/functions/calendar.js'
 import { buildICS } from '../src/utils/ics.js'
+import { MATCHES } from '../src/data/matches.js'
 
 // The UID domain the DOWNLOADED file stamps. Read out of the download path rather
 // than written here, so this file states the invariant (both sources agree) rather
@@ -116,12 +117,15 @@ describe('the calendar handler', () => {
     expect(events((await handler({ queryStringParameters: {} })).body)).toBe(1)
   })
 
-  it('identifies a match with no number by its teams and date', async () => {
-    global.fetch = ok({ matches: [match({ num: undefined, round: 'Final' })] })
+  it('falls back to teams and date for a fixture the committed data has never seen', async () => {
+    // Only reachable if the feed grows a match this edition never played. A
+    // recognized pair takes its number from MATCH_NUMS instead; see the
+    // agreement test at the bottom of this file.
+    global.fetch = ok({
+      matches: [match({ num: undefined, round: 'Final', team1: 'Narnia', team2: 'Gondor' })],
+    })
     const body = (await handler({ queryStringParameters: {} })).body
-    expect(body).toMatch(
-      new RegExp(`UID:euro2024-Final-Germany-Scotland-2024-06-14@${UID_DOMAIN}`),
-    )
+    expect(body).toMatch(new RegExp(`UID:euro2024-Final-Narnia-Gondor-2024-06-14@${UID_DOMAIN}`))
   })
 
   it('serves an empty calendar rather than failing when the feed has no matches', async () => {
@@ -204,5 +208,57 @@ describe('the calendar handler', () => {
     global.fetch = ok({ matches: [match({ round: 'Final', group: undefined, team1: 'L51', team2: 'L52' })] })
     const body = (await handler({ queryStringParameters: {} })).body
     expect(body).toContain('Loser Match 51 vs Loser Match 52')
+  })
+
+  // The bug this pair of tests exists for: the feed and the download used to
+  // stamp different UID bodies for the same fixture, so a subscriber who had
+  // also downloaded a match saw it twice in their calendar. A UID is the only
+  // thing a calendar client uses to decide "same event", so the two sources
+  // have to agree on all 51 of them, not just on the domain half.
+
+  it('gives every committed fixture the same UID the download would', async () => {
+    global.fetch = ok({
+      matches: MATCHES.map((m) => ({
+        round: m.stage === 'Group' ? 'Matchday 1' : m.stage,
+        group: m.group,
+        date: m.ko.slice(0, 10),
+        time: '21:00',
+        team1: m.t1,
+        team2: m.t2,
+      })),
+    })
+    const body = (await handler({ queryStringParameters: {} })).body
+    const fromFeed = [...body.matchAll(/UID:(\S+)/g)].map((x) => x[1].trim())
+    const fromDownload = MATCHES.map((m) => buildICS(m).match(/UID:(\S+)/)[1].trim())
+
+    expect(fromFeed).toHaveLength(MATCHES.length)
+    expect(new Set(fromFeed).size).toBe(MATCHES.length)
+    expect([...fromFeed].sort()).toEqual([...fromDownload].sort())
+  })
+
+  it('resolves a number for every fixture the real upstream feed publishes', async () => {
+    // MATCH_NUMS is a restatement of src/data/matches.js, so it can drift from
+    // it. Rebuilding the map here from the app's own data is what catches a
+    // regenerated fixture list: a missing or renumbered pair fails this, not a
+    // subscriber's calendar. It also pins the shape the feed is keyed on, since
+    // OpenFootball lists some fixtures in the opposite home/away order.
+    const pairs = MATCHES.map((m) => [m.t1, m.t2].sort().join('~'))
+    expect(new Set(pairs).size).toBe(MATCHES.length)
+
+    global.fetch = ok({
+      matches: MATCHES.map((m) => ({
+        round: 'Matchday 1',
+        group: 'Group A',
+        date: m.ko.slice(0, 10),
+        time: '21:00',
+        // Reversed on purpose: identity must not depend on which side is first.
+        team1: m.t2,
+        team2: m.t1,
+      })),
+    })
+    const body = (await handler({ queryStringParameters: {} })).body
+    expect(body).not.toMatch(/UID:euro2024-Matchday/)
+    expect([...body.matchAll(/UID:euro2024-match-(\d+)@/g)].map((x) => Number(x[1])).sort((a, b) => a - b))
+      .toEqual(MATCHES.map((m) => m.num).sort((a, b) => a - b))
   })
 })

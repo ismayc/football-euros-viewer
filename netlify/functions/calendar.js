@@ -66,15 +66,90 @@ function esc(t) {
   return String(t).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n')
 }
 
-// The feed carries no match numbers, so a UID is built from the fixture itself.
+// Match numbers, keyed by the two teams. The download stamps a UID of
+// `euro2024-match-<num>@footballeurosviewer` (src/utils/ics.js, from
+// LEAGUE.ics); this feed used to build a UID out of the round, teams and date
+// instead, so subscribing AND downloading put two events in the calendar for
+// every fixture. The bodies now agree, and test/calendar-feed.test.js asserts
+// that against the download path rather than against a second copy of the
+// literal.
 //
-// The domain half must stay `@footballeurosviewer`, matching src/utils/ics.js. It
-// said `@euroviewer` here, which was a copy artifact: harmless today only because
-// the UID BODIES already differ between the download and the feed, so the two
-// sources produce separate calendar entries either way. Whoever aligns the bodies
-// (world-cup-viewer's feed already reads `m.num` and matches its download exactly)
-// should not also have to notice a second, silent mismatch.
+// The table is a restatement of src/data/matches.js, in the same spirit as
+// VENUE_ALIASES in the sibling viewers: a Netlify function is kept
+// self-contained, and a test rebuilds this map from the app's own data so a
+// regenerated fixture list cannot drift away from it silently.
+//
+// A pair is unique across the 51 matches of a single-round-robin group stage
+// plus a knockout bracket, and Euro 2024 has no repeated meeting. The keys are
+// the app's spellings (Czechia, Türkiye), so `norm` is applied before lookup.
+const MATCH_NUMS = {
+  "Germany~Scotland"     : 1,
+  "Hungary~Switzerland"  : 2,
+  "Croatia~Spain"        : 3,
+  "Albania~Italy"        : 4,
+  "Netherlands~Poland"   : 5,
+  "Denmark~Slovenia"     : 6,
+  "England~Serbia"       : 7,
+  "Romania~Ukraine"      : 8,
+  "Belgium~Slovakia"     : 9,
+  "Austria~France"       : 10,
+  "Georgia~Türkiye"      : 11,
+  "Czechia~Portugal"     : 12,
+  "Albania~Croatia"      : 13,
+  "Germany~Hungary"      : 14,
+  "Scotland~Switzerland" : 15,
+  "Serbia~Slovenia"      : 16,
+  "Denmark~England"      : 17,
+  "Italy~Spain"          : 18,
+  "Slovakia~Ukraine"     : 19,
+  "Austria~Poland"       : 20,
+  "France~Netherlands"   : 21,
+  "Czechia~Georgia"      : 22,
+  "Portugal~Türkiye"     : 23,
+  "Belgium~Romania"      : 24,
+  "Hungary~Scotland"     : 25,
+  "Germany~Switzerland"  : 26,
+  "Albania~Spain"        : 27,
+  "Croatia~Italy"        : 28,
+  "France~Poland"        : 29,
+  "Austria~Netherlands"  : 30,
+  "Denmark~Serbia"       : 31,
+  "England~Slovenia"     : 32,
+  "Romania~Slovakia"     : 33,
+  "Belgium~Ukraine"      : 34,
+  "Czechia~Türkiye"      : 35,
+  "Georgia~Portugal"     : 36,
+  "Denmark~Germany"      : 37,
+  "Italy~Switzerland"    : 38,
+  "Georgia~Spain"        : 39,
+  "England~Slovakia"     : 40,
+  "Portugal~Slovenia"    : 41,
+  "Belgium~France"       : 42,
+  "Netherlands~Romania"  : 43,
+  "Austria~Türkiye"      : 44,
+  "Germany~Spain"        : 45,
+  "France~Portugal"      : 46,
+  "England~Switzerland"  : 47,
+  "Netherlands~Türkiye"  : 48,
+  "France~Spain"         : 49,
+  "England~Netherlands"  : 50,
+  "England~Spain"        : 51,
+}
+
+// The pair key both sides agree on. Sorted, so home/away order cannot matter:
+// OpenFootball and the app disagree on which side is listed first for some
+// fixtures, and the identity of a match does not depend on that.
+function pairKey(a, b) {
+  return [a, b].sort().join('~')
+}
+
+// The feed carries no match numbers of its own, so the number is recovered from
+// the fixture's teams. An unrecognized fixture (a feed that grew a match the
+// committed data has never seen) falls back to the old descriptive body rather
+// than risk colliding with a real match's UID.
 function uid(m) {
+  const num = MATCH_NUMS[pairKey(norm(m.team1), norm(m.team2))]
+  if (num != null) return `euro2024-match-${num}@footballeurosviewer`
   return `euro2024-${m.round}-${norm(m.team1)}-${norm(m.team2)}-${m.date}@footballeurosviewer`.replace(
     /\s+/g,
     '_',

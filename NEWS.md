@@ -4,6 +4,23 @@ A dated changelog for the Euro 2024 Schedule Viewer. Each heading is a calendar
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-09-07
+
+- **Subscribing to the calendar and downloading a match no longer produce two events.**
+  The download stamped each match `euro2024-match-<num>@footballeurosviewer`; the
+  subscription feed built its own body out of the round, teams and date. A UID is the only
+  thing a calendar client uses to decide "same event", so every fixture a subscriber had
+  also downloaded sat in the calendar twice. The feed now recovers the match number from
+  the fixture's teams and stamps the same UID the download does, for all 51 matches.
+- **The feed's match numbers come from a table keyed on the sorted team pair**, so
+  OpenFootball listing a fixture in the opposite home/away order cannot change a match's
+  identity. A fixture the committed data has never seen still falls back to the old
+  descriptive body rather than risk colliding with a real match.
+- **Two new tests state the invariant rather than a copy of the literal**: one builds the
+  whole feed and asserts its UIDs are exactly the set the download path produces, and one
+  rebuilds the number table from `src/data/matches.js` so a regenerated fixture list fails
+  the suite instead of silently drifting.
+
 ## 2026-09-06
 
 - **The scenarios view's CSS classes are named after the entry round now, not a round
