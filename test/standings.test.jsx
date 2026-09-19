@@ -98,6 +98,34 @@ describe('Standings', () => {
     )
   })
 
+  it('explains the provisional-third mark only while a row carries it', () => {
+    // Mid-tournament: Group A done, the rest to play, so Switzerland sits third
+    // on the bubble and the legend has a mark to explain.
+    const { unmount } = render(
+      <FollowProvider>
+        <Standings matches={withGroupA()} hideScores={false} />
+      </FollowProvider>,
+    )
+    expect(document.querySelector('.standings-legend').textContent).toMatch(
+      /Provisional 3rd best-third spot, not yet clinched/,
+    )
+    unmount()
+
+    // The finished tournament this viewer ships: every group is decided, no row
+    // carries the mark, and the legend must not still say "not yet clinched".
+    render(
+      <FollowProvider>
+        <Standings matches={PLAYED} hideScores={false} />
+      </FollowProvider>,
+    )
+    const legend = document.querySelector('.standings-legend')
+    expect(legend.textContent).not.toMatch(/not yet clinched/)
+    expect(legend.querySelector('.q-best3')).toBeNull()
+    // The rest of the legend is untouched.
+    expect(legend.textContent).toMatch(/Top two advance/)
+    expect(legend.textContent).toMatch(/tie-breakers/)
+  })
+
   it('tints the best-third table per clinch: bubble yellow, clinched green, out red', () => {
     // Only Group A complete → Switzerland is its (sole) third-placed team, so it is
     // the lone row in the best-third table.
