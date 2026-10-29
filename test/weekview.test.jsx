@@ -137,3 +137,12 @@ describe('WeekView', () => {
     expect(screen.getByText('Winner Match 42')).toBeInTheDocument()
   })
 })
+
+describe('WeekView live badge in spoiler-free mode', () => {
+  it('shows only LIVE while the day is hidden', () => {
+    const m = { ...MATCHES.find((x) => x.stage === 'Group'), score: [1, 1], live: { clock: "ET 105'", detail: 'Extra Time' } }
+    renderWeek({ allMatches: [m], shown: [m], dayHidden: () => true })
+    expect(screen.getByRole('status')).toHaveTextContent(/^● LIVE$/)
+    expect(screen.queryByText(/105/)).toBeNull()
+  })
+})

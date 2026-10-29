@@ -273,3 +273,12 @@ describe('Bracket with pieces missing', () => {
     }
   })
 })
+
+describe('Bracket live badge in spoiler-free mode', () => {
+  it('shows only LIVE while scores are hidden', () => {
+    const live = MATCHES.map((m) => (m.num === 38 ? { ...m, live: { clock: "ET 105'", detail: 'Extra Time' } } : m))
+    renderBracket(live, { hideScores: true })
+    expect(screen.getByRole('status')).toHaveTextContent(/^● LIVE$/)
+    expect(screen.queryByText(/105/)).toBeNull()
+  })
+})

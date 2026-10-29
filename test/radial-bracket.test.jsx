@@ -332,3 +332,19 @@ describe('RadialBracket — a board missing the ties around its champion', () =>
     expect(container.querySelector('.rb-node.on-trail')).toBeNull()
   })
 })
+
+describe('RadialBracket: spoiler-free mode hides who advanced', () => {
+  it('leaves the winner rings, the champion, and the knocked-out fade off', () => {
+    const { container } = render(
+      <FollowProvider>
+        <DetailContext.Provider value={() => {}}>
+          <RadialBracket matches={playedBracket()} hideScores />
+        </DetailContext.Provider>
+      </FollowProvider>,
+    )
+    expect(container.querySelector('.rb-champ')).toBeNull()
+    expect(container.querySelectorAll('.champ-trail').length).toBe(0)
+    expect(container.querySelectorAll('.rb-node.out').length).toBe(0)
+    expect(container.textContent).not.toMatch(/Champions/)
+  })
+})

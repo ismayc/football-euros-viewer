@@ -130,3 +130,12 @@ describe('DayMatchesModal (coverage)', () => {
   })
 
 })
+
+describe('DayMatchesModal live badge in spoiler-free mode', () => {
+  it('shows only LIVE while scores are hidden', () => {
+    const live = { ...GROUP_MATCH, num: 9002, live: { clock: "90+3'", detail: '2nd Half' }, score: [1, 1] }
+    renderModal({ matches: [live], hideScores: true })
+    expect(screen.getByRole('status')).toHaveTextContent(/^● LIVE$/)
+    expect(screen.queryByText(/90\+3/)).toBeNull()
+  })
+})

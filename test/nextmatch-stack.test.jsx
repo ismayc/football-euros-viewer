@@ -121,3 +121,26 @@ describe('NextMatch — stacked rows for knockout matches', () => {
     }
   })
 })
+
+describe('NextMatch spoiler-free mode', () => {
+  const lv = (m) => ({ ...m, live: { clock: "ET 105'", detail: 'Extra Time' }, score: [1, 1] })
+  it('shows only LIVE on each stacked live row', () => {
+    render(
+      <FollowProvider>
+        <NextMatch matches={[lv(a), lv(b)]} tz="America/New_York" hideScores />
+      </FollowProvider>,
+    )
+    expect([...document.querySelectorAll('.badge-live')].map((e) => e.textContent)).toEqual(['● LIVE', '● LIVE'])
+  })
+
+  it('does not crown the champion while scores are hidden', () => {
+    const final = { num: 104, stage: 'Final', t1: 'Argentina', t2: 'France', venue: 'metlife', ko: '2024-07-14T15:00:00-04:00', score: [3, 2] }
+    render(
+      <FollowProvider>
+        <NextMatch matches={[final]} tz="America/New_York" hideScores />
+      </FollowProvider>,
+    )
+    expect(screen.queryByText('Euro 2024 Champions!')).toBeNull()
+    expect(screen.getByText(/tournament has concluded/)).toBeInTheDocument()
+  })
+})

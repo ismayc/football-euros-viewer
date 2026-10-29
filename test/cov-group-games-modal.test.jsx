@@ -143,3 +143,14 @@ describe('GroupGamesModal (coverage)', () => {
     expect(screen.getAllByText('Upcoming').length).toBe(3)
   })
 })
+
+describe('GroupGamesModal live badge in spoiler-free mode', () => {
+  it('shows only LIVE while scores are hidden', () => {
+    const live = MATCHES.map((m) =>
+      m.num === GROUP_A[0].num ? { ...m, live: { clock: "90+3'", detail: '2nd Half' }, score: [1, 1] } : m,
+    )
+    renderModal({ matches: live, hideScores: true })
+    expect(screen.getByRole('status')).toHaveTextContent(/^● LIVE$/)
+    expect(screen.queryByText(/90\+3/)).toBeNull()
+  })
+})

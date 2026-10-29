@@ -286,3 +286,13 @@ describe('MatchDetail close handlers', () => {
     expect(onClose).toHaveBeenCalled()
   })
 })
+
+describe('MatchDetail live badge in spoiler-free mode', () => {
+  it('shows only LIVE until the score is revealed', () => {
+    const live = { ...groupMatch, live: { clock: "ET 105'", detail: 'Extra Time' }, score: [1, 1] }
+    renderDetail({ match: live, hideScores: true })
+    expect(screen.getByRole('status')).toHaveTextContent(/^● LIVE$/)
+    fireEvent.click(screen.getByText(/reveal/))
+    expect(screen.getByRole('status')).toHaveTextContent("ET 105'")
+  })
+})

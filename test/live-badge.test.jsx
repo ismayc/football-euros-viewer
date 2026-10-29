@@ -26,3 +26,14 @@ describe('LiveBadge', () => {
     expect(badge).toHaveClass('custom')
   })
 })
+
+// Spoiler-free: a minute like "90+3'" or "ET 105'" says the match is level or went long.
+describe('LiveBadge in spoiler-free mode', () => {
+  it('shows only LIVE, with no clock in the text, the label, or the tooltip', () => {
+    render(<LiveBadge match={{ live: { clock: "ET 105'", detail: 'Extra Time' } }} hideScores />)
+    const badge = screen.getByRole('status')
+    expect(badge).toHaveTextContent(/^● LIVE$/)
+    expect(badge).toHaveAttribute('aria-label', 'Live')
+    expect(badge).toHaveAttribute('title', 'Live')
+  })
+})

@@ -281,3 +281,14 @@ describe('MatchCard venue local time', () => {
     expect(screen.queryByText(/local$/)).not.toBeInTheDocument()
   })
 })
+
+describe('MatchCard live badge in spoiler-free mode', () => {
+  const live = { ...groupMatch, live: { clock: "90+3'", detail: '2nd Half' }, score: [1, 1] }
+  it('shows only LIVE while the score is hidden, and the clock after a reveal', () => {
+    renderCard({ match: live, hidden: true })
+    expect(screen.getByRole('status')).toHaveTextContent(/^● LIVE$/)
+    expect(screen.queryByText(/90\+3/)).toBeNull()
+    fireEvent.click(screen.getByTitle('Reveal score'))
+    expect(screen.getByRole('status')).toHaveTextContent("90+3'")
+  })
+})

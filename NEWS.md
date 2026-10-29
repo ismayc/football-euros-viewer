@@ -4,6 +4,17 @@ A dated changelog for the Euro 2024 Schedule Viewer. Each heading is a calendar
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-10-29
+
+- **Spoiler-free mode no longer gives away the clock, the champion, or who advanced.**
+  A live match showed its minute ("90+3'", or "ET 105'" in extra time), which says the
+  match is close or went long. With scores hidden, the live badge now reads only "LIVE" on
+  the match cards, the Week view, the next-match banner, the day and group pop-ups, the
+  bracket, and the match popout (until "reveal"), and its tooltip drops the clock too. The
+  next-match banner also stopped crowning the champion, and the circular bracket stopped
+  filling in round winners, the champion, and the faded knocked-out teams while scores
+  are hidden. Final scores, "AET", and shootout results were already hidden.
+
 ## 2026-09-19
 
 - **The group legend no longer explains a mark that is not on screen.** With the
