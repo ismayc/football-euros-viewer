@@ -4,6 +4,13 @@ A dated changelog for the Euro 2024 Schedule Viewer. Each heading is a calendar
 day; bullet points capture every change made that day (features, fixes,
 data/source updates, deployment). Newest day on top.
 
+## 2026-10-31
+
+- **Spoiler-free mode no longer raises goal alerts.** A goal alert names the scorer and
+  the score, so with scores hidden the viewer raises no goal toast and no browser
+  notification. The alerts start again when scores are shown, without replaying the
+  goals already scored.
+
 ## 2026-10-29
 
 - **Spoiler-free mode no longer gives away the clock, the champion, or who advanced.**
