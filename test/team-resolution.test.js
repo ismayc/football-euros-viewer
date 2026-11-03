@@ -15,7 +15,7 @@ import { normalizeTeam } from '../src/services/results.js'
 // The fixtures are captures of the whole 2024 tournament:
 //   espn: site.api.espn.com/apis/site/v2/sports/soccer/uefa.euro/scoreboard
 //         ?dates=20240614-20240715&limit=100  → competitors[].team.displayName
-//   sdb:  thesportsdb.com/api/v1/json/3/eventsday.php?d=<match date>&l=4502
+//   sdb:  thesportsdb.com/api/v1/json/123/eventsday.php?d=<match date>&l=4502
 //         → strHomeTeam / strAwayTeam, over every match date
 
 const here = dirname(fileURLToPath(import.meta.url))
