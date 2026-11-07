@@ -29,8 +29,9 @@ stable since 2016.
   followed teams, or "Live now"), with a jump-to-match button.
 - **Goal alerts** — opt-in 🔔 browser notifications when a goal is scored (scorer,
   minute, and the running score), scoped to your followed teams or all matches.
-- **Six views** — chronological schedule, a Sunday–Saturday week calendar, group
-  standings, the knockout bracket, a radial bracket, and tournament stats.
+- **Eight views** — chronological schedule, a Sunday–Saturday week calendar, group
+  standings, Scenarios, R16 Outlook, the knockout bracket, a radial bracket, and
+  tournament stats. The two group-stage tools retire once the group stage is over.
 - **Phone-friendly schedule** — past days collapse to tappable headers by default
   (or hide entirely), so the schedule opens on the day's games rather than a long
   scroll.
@@ -76,7 +77,8 @@ stable since 2016.
   teams' tournament records side by side.
 - **Add to calendar** — per-match `.ics` download, plus a `webcal://` subscription
   feed (all matches or just your teams).
-- **Spoiler-free mode** — hide scores globally, per day, or per match.
+- **Spoiler-free mode** — hide scores globally, per day, or per match. It also
+  hides the live clock, goal alerts, and the champion.
 - **Light/dark theme** — follows your system preference, with no flash on load.
 - **Shareable URLs** — view, timezone, spoiler mode, and filters persist to the
   query string; links unfurl with a title/description preview in chat apps.
@@ -161,7 +163,7 @@ See [`NEWS.md`](./NEWS.md) for the changelog.
 
 ## Credits
 
-Created by [Chester Ismay](https://chester.rbind.io). Source on
+Created by [Chester Ismay](https://chesterismay.com). Source on
 [GitHub](https://github.com/ismayc/football-euros-viewer).
 
 The soccer ball in the app icons and share image is from
